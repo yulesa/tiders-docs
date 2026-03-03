@@ -1,0 +1,17 @@
+[book]
+title = "tiders"
+authors = ["Yulesa"]
+language = "en"
+src = "src"
+
+[build]
+build-dir = "site"
+
+[output.html]
+default-theme = "light"
+preferred-dark-theme = "navy"
+git-repository-url = "https://github.com/yulesa/tiders-docs"
+additional-css = ["src/custom.css"]
+
+[output.html.search]
+enable = true
