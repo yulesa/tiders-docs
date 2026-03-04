@@ -4,16 +4,21 @@
 
 Unlike specialized providers (HyperSync, SQD), the RPC client works with **any** Ethereum-compatible JSON-RPC endpoint — Alchemy, Infura, QuickNode, local nodes, or any other provider.
 
-## Data Types
+## Data Types and Pipelines
 
-The client can fetch four types of blockchain data:
+The client fetches blockchain data through three independent pipelines, each wrapping a specific RPC method:
 
-| Data Type | RPC Methods |
-|---|---|
-| Blocks | `eth_getBlockByNumber` |
-| Transactions | via block data or `eth_getBlockReceipts` |
-| Logs | `eth_getLogs` |
-| Traces | `trace_block` or `debug_traceBlockByNumber` |
+| Pipeline | RPC Method | Data Types |
+|---|---|---|
+| Block | `eth_getBlockByNumber` | Blocks and transactions |
+| Log | `eth_getLogs` | Event logs |
+| Trace | `trace_block` or `debug_traceBlockByNumber` | Internal call traces |
+
+The block pipeline also handles an internal **transaction receipts** pipeline via `eth_getBlockReceipts`. When the query requests receipt fields (e.g. `status`, `gas_used`, `effective_gas_price`), the block pipeline automatically fetches receipts and merges them into the transaction data.
+
+When a query requires data from more than one pipeline, the client uses a **multi-pipeline stream** that runs all needed pipelines over the same block range in each batch and merges the results into a single response.
+
+See [Pipelines](./pipelines.md) for details on each pipeline, the multi-pipeline stream, and the historical/live phases.
 
 ## Key Features
 

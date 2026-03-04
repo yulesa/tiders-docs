@@ -23,7 +23,7 @@ A pipeline is built from four components:
 
 ```python
 import asyncio
-from tiders_etl import config as cc, run_pipeline
+from tiders import config as cc, run_pipeline
 from tiders_core import ingest
 
 pipeline = cc.Pipeline(
@@ -39,7 +39,7 @@ asyncio.run(run_pipeline(pipeline=pipeline))
 ## Module Structure
 
 ```text
-tiders_etl
+tiders
 ├── config          # Pipeline, Step, Writer configuration classes
 ├── pipeline        # run_pipeline() entry point
 ├── writers/        # Output adapters (DuckDB, ClickHouse, Iceberg, etc.)

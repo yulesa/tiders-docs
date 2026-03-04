@@ -32,9 +32,15 @@
 # RPC Client (tiders-rpc-client)
 
 - [Overview](./tiders-rpc-client/overview.md)
+- [Pipelines](./tiders-rpc-client/pipelines.md)
 - [Configuration](./tiders-rpc-client/configuration.md)
 - [Querying](./tiders-rpc-client/querying.md)
+- [Adaptive Concurrency](./tiders-rpc-client/adaptive_concurrency.md)
 
 # API Reference
 
 - [Rust API (rustdoc)](./api_reference.md)
+
+# Project Architecture
+
+- [Architecture](./architecture.md)
