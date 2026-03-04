@@ -1,14 +1,265 @@
-/* Wider content area */
+/* ============================================
+   Tiders Docs — Ocean/Teal Theme
+   ============================================ */
+
+/* Fonts: Inter for text, JetBrains Mono for code, Space Grotesk for title */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@700&display=swap');
+
+/* ---- Global overrides ---- */
 :root {
     --content-max-width: 1000px;
+    --mono-font: 'JetBrains Mono', Consolas, 'Ubuntu Mono', Menlo, monospace;
+    --code-font-size: 0.85em;
 }
 
-/* Minimal styling for API reference links */
+/* Apply Inter to all body text */
+body, .sidebar, .menu-bar, .nav-chapters {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* ---- Light theme (ocean/teal) ---- */
+.light, html:not(.js) {
+    --bg: #f8fafb;
+    --fg: #1e293b;
+
+    --sidebar-bg: #0f172a;
+    --sidebar-fg: #cbd5e1;
+    --sidebar-non-existant: #475569;
+    --sidebar-active: #2dd4bf;
+    --sidebar-spacer: #1e293b;
+
+    --scrollbar: #64748b;
+
+    --icons: #94a3b8;
+    --icons-hover: #e2e8f0;
+
+    --links: #0d9488;
+
+    --inline-code-color: #115e59;
+
+    --theme-popup-bg: #f1f5f9;
+    --theme-popup-border: #cbd5e1;
+    --theme-hover: #e2e8f0;
+
+    --quote-bg: #f0fdfa;
+    --quote-border: #99f6e4;
+
+    --warning-border: #f59e0b;
+
+    --table-border-color: #e2e8f0;
+    --table-header-bg: #ccfbf1;
+    --table-alternate-bg: #f0fdfa;
+
+    --searchbar-border-color: #94a3b8;
+    --searchbar-bg: #ffffff;
+    --searchbar-fg: #0f172a;
+    --searchbar-shadow-color: rgba(15, 23, 42, 0.1);
+    --searchresults-header-fg: #475569;
+    --searchresults-border-color: #cbd5e1;
+    --searchresults-li-bg: #f0fdfa;
+    --search-mark-bg: #99f6e4;
+
+    --color-scheme: light;
+
+    --copy-button-filter: invert(65%) sepia(10%) saturate(500%) hue-rotate(175deg) brightness(90%) contrast(90%);
+    --copy-button-filter-hover: invert(55%) sepia(60%) saturate(500%) hue-rotate(130deg) brightness(95%) contrast(95%);
+
+    --footnote-highlight: #14b8a6;
+
+    --overlay-bg: rgba(15, 23, 42, 0.2);
+
+    --blockquote-note-color: #0d9488;
+    --blockquote-tip-color: #059669;
+    --blockquote-important-color: #7c3aed;
+    --blockquote-warning-color: #d97706;
+    --blockquote-caution-color: #dc2626;
+
+    --sidebar-header-border-color: #14b8a6;
+}
+
+/* ---- Navy/dark theme (ocean dark) ---- */
+.navy {
+    --bg: #0c1222;
+    --fg: #cbd5e1;
+
+    --sidebar-bg: #0f172a;
+    --sidebar-fg: #94a3b8;
+    --sidebar-non-existant: #475569;
+    --sidebar-active: #2dd4bf;
+    --sidebar-spacer: #1e293b;
+
+    --scrollbar: #475569;
+
+    --icons: #64748b;
+    --icons-hover: #cbd5e1;
+
+    --links: #14b8a6;
+
+    --inline-code-color: #5eead4;
+
+    --theme-popup-bg: #0f172a;
+    --theme-popup-border: #334155;
+    --theme-hover: #1e293b;
+
+    --quote-bg: rgba(20, 184, 166, 0.08);
+    --quote-border: rgba(20, 184, 166, 0.25);
+
+    --warning-border: #f59e0b;
+
+    --table-border-color: #1e293b;
+    --table-header-bg: #1e293b;
+    --table-alternate-bg: #111827;
+
+    --searchbar-border-color: #475569;
+    --searchbar-bg: #1e293b;
+    --searchbar-fg: #e2e8f0;
+    --searchbar-shadow-color: rgba(0, 0, 0, 0.3);
+    --searchresults-header-fg: #94a3b8;
+    --searchresults-border-color: #334155;
+    --searchresults-li-bg: #162032;
+    --search-mark-bg: #115e59;
+
+    --color-scheme: dark;
+
+    --copy-button-filter: invert(40%) sepia(10%) saturate(500%) hue-rotate(175deg) brightness(90%) contrast(90%);
+    --copy-button-filter-hover: invert(70%) sepia(40%) saturate(600%) hue-rotate(130deg) brightness(95%) contrast(95%);
+
+    --footnote-highlight: #14b8a6;
+
+    --overlay-bg: rgba(0, 0, 0, 0.4);
+
+    --blockquote-note-color: #2dd4bf;
+    --blockquote-tip-color: #34d399;
+    --blockquote-important-color: #a78bfa;
+    --blockquote-warning-color: #fbbf24;
+    --blockquote-caution-color: #f87171;
+
+    --sidebar-header-border-color: #14b8a6;
+}
+
+/* ---- Typography refinements ---- */
+.content main {
+    line-height: 1.75;
+}
+
+.content main h1 {
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    border-bottom: 2px solid var(--sidebar-active);
+    padding-bottom: 0.3em;
+}
+
+.content main h2 {
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin-top: 2em;
+}
+
+.content main h3 {
+    font-weight: 600;
+}
+
+/* ---- Code block styling ---- */
+code {
+    font-family: var(--mono-font);
+    border-radius: 4px;
+}
+
+pre {
+    border-radius: 8px;
+    padding: 1em !important;
+}
+
+pre > .buttons {
+    border-radius: 0 8px 0 0;
+}
+
+/* Inline code */
+:not(pre) > code {
+    padding: 0.15em 0.4em;
+    border-radius: 4px;
+}
+
+/* ---- Sidebar polish ---- */
+.sidebar .sidebar-scrollbox {
+    padding: 1em;
+}
+
+.sidebar ol.chapter li a {
+    padding: 6px 12px;
+    border-radius: 6px;
+    transition: background-color 0.15s ease;
+}
+
+.light .sidebar ol.chapter li a:hover,
+html:not(.js) .sidebar ol.chapter li a:hover {
+    background-color: rgba(45, 212, 191, 0.1);
+}
+
+.navy .sidebar ol.chapter li a:hover {
+    background-color: rgba(45, 212, 191, 0.1);
+}
+
+/* ---- Sidebar header nav (page TOC) styling ---- */
+.sidebar .sidebar-header-nav a {
+    font-size: 0.85em;
+    opacity: 0.75;
+    transition: opacity 0.15s ease;
+}
+
+.sidebar .sidebar-header-nav a:hover {
+    opacity: 1;
+}
+
+/* ---- Table styling ---- */
+table {
+    border-radius: 8px;
+    overflow: hidden;
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+}
+
+table th {
+    font-weight: 600;
+    text-align: left;
+}
+
+table td, table th {
+    padding: 0.6em 1em;
+}
+
+/* ---- Links ---- */
+.content main a {
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.15s ease;
+}
+
+.content main a:hover {
+    border-bottom-color: currentColor;
+}
+
+/* ---- API reference link styling ---- */
 .api-link {
     display: inline-block;
     padding: 2px 8px;
-    background: #f0f0f0;
+    background: rgba(20, 184, 166, 0.1);
     border-radius: 4px;
-    font-family: monospace;
+    font-family: var(--mono-font);
     font-size: 0.9em;
+    color: var(--links);
+}
+
+/* ---- Menu bar ---- */
+.menu-bar {
+    border-bottom: 1px solid var(--table-border-color);
+}
+
+.menu-title {
+    font-family: 'Space Grotesk', 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 4rem;
+    color: var(--sidebar-active);
+    letter-spacing: -0.02em;
 }

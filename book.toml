@@ -1,5 +1,5 @@
 [book]
-title = "tiders"
+title = "Tiders"
 authors = ["Yulesa"]
 language = "en"
 src = "src"
@@ -12,6 +12,7 @@ default-theme = "light"
 preferred-dark-theme = "navy"
 git-repository-url = "https://github.com/yulesa/tiders-docs"
 additional-css = ["src/custom.css"]
+sidebar-header-nav = true
 
 [output.html.search]
 enable = true

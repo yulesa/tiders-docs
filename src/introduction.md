@@ -1,12 +1,12 @@
-# tiders
+# Tiders
 
-**tiders** is an open-source framework for building production-ready blockchain data pipelines.
+**Tiders** is an open-source framework for building production-ready blockchain data pipelines.
 
 It lets you extract, decode, transform, and load blockchain data using pure Python — no YAML, SQL, or TOML configuration files needed.
 
 ## Architecture
 
-tiders is composed of three repositories:
+Tiders is composed of three repositories:
 
 | Repository | Language | Role |
 |---|---|---|
