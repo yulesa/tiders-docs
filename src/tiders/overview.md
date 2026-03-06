@@ -1,11 +1,11 @@
 # Python SDK Overview
 
-The `tiders-etl` Python package is the primary user-facing interface for building blockchain data pipelines.
+The `tiders` Python package is the primary user-facing interface for building blockchain data pipelines.
 
 ## Installation
 
 ```bash
-pip install tiders-etl tiders-core
+pip install tiders tiders-core
 ```
 
 ## Core Concepts

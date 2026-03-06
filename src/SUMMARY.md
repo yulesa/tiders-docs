@@ -7,6 +7,7 @@
 - [Getting Started](./getting_started.md)
   - [Installation](./getting_started/installation.md)
   - [Your First Pipeline](./getting_started/first_pipeline.md)
+  - [Development Setup](./getting_started/development_setup.md)
 
 # Python SDK (tiders)
 

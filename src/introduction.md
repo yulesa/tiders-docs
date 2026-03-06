@@ -2,7 +2,7 @@
 
 **Tiders** is an open-source framework for building production-ready blockchain data pipelines.
 
-It lets you extract, decode, transform, and load blockchain data using pure Python — no YAML, SQL, or TOML configuration files needed.
+It lets you extract, decode, transform, and store blockchain data using Python.
 
 ## Architecture
 
@@ -16,25 +16,25 @@ Tiders is composed of three repositories:
 
 ```text
                          ┌──────────────────────────────┐
-                         │      tiders (Python SDK)      │
-                         │   pipeline · steps · writers  │
+                         │      tiders (Python SDK)     │
+                         │   pipeline · steps · writers │
                          └──────────────┬───────────────┘
                                         │ calls via PyO3
                          ┌──────────────▼───────────────┐
-                         │     tiders-core (Rust)        │
-                         │  ingest · decode · cast       │
-                         │  evm-schema · svm-schema      │
+                         │     tiders-core (Rust)       │
+                         │  ingest · decode · cast      │
+                         │  evm-schema · svm-schema     │
                          └──────┬───────────────┬───────┘
                                 │               │
                ┌────────────────▼──┐   ┌────────▼───────────┐
-               │   Data Providers  │   │  tiders-rpc-client  │
-               │ HyperSync · SQD   │   │  Any EVM JSON-RPC   │
-               └───────────────────┘   └─────────────────────┘
+               │   Data Providers  │   │  tiders-rpc-client │
+               │ HyperSync · SQD   │   │  Any EVM JSON-RPC  │
+               └───────────────────┘   └────────────────────┘
 ```
 
 ## Key Features
 
-- **Pure Python** — define pipelines as Python code
+- **Python** — define pipelines as Python code
 - **High performance** — all core operations implemented in Rust
 - **Multiple data providers** — HyperSync, SQD, and standard RPC endpoints
 - **EVM and SVM support** — Ethereum and Solana blockchains

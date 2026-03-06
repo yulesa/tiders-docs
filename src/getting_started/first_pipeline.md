@@ -62,7 +62,7 @@ query = ingest.Query(
 ## Step 3: Add Transformation Steps
 
 ```python
-from tiders_etl import config as cc
+from tiders import config as cc
 
 steps = [
     # Decode the raw log data into typed columns
@@ -101,7 +101,7 @@ writer = cc.Writer(
 
 ```python
 import asyncio
-from tiders_etl import run_pipeline
+from tiders import run_pipeline
 
 pipeline = cc.Pipeline(
     provider=provider,

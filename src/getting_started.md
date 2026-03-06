@@ -11,9 +11,9 @@ This section walks you through installing tiders and running your first blockcha
 
 ```bash
 # Install
-pip install tiders-etl tiders-core
+pip install tiders tiders-core
 # Or with uv:
-uv pip install tiders-etl tiders-core
+uv pip install tiders tiders-core
 ```
 
 Then run one of the included examples:
