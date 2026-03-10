@@ -24,8 +24,9 @@ Here's an overview of how transformation steps work:
 | `JOIN_EVM_TRANSACTION_DATA` | `join_evm_transaction_data` | Join EVM transaction fields into other tables |
 | `JOIN_SVM_TRANSACTION_DATA` | `join_svm_transaction_data` | Join SVM transaction fields into other tables |
 | `SET_CHAIN_ID` | `set_chain_id` | Add a constant `chain_id` column to all tables |
-| `POLARS` | `python_file` | Custom transformation using Polars DataFrames |
-| `DATAFUSION` | `python_file` | Custom transformation using DataFusion |
+| `POLARS` | — | Custom transformation using Polars DataFrames |
+| `DATAFUSION` | — | Custom transformation using DataFusion |
+| — | `python_file` | Load a custom Polars or DataFusion function from a .py file (yaml only) |
 | — | `sql` | Run DataFusion SQL queries (yaml only) |
 
 ---
@@ -450,132 +451,180 @@ cc.Step(
 
 ---
 
-## SQL (yaml only)
-
-Run DataFusion SQL queries against the in-memory tables. Results from `CREATE TABLE name AS ...` are stored under `name`; plain `SELECT` results are stored as `sql_result`.
-
-**yaml**
-
-```yaml
-- kind: sql
-  config:
-    queries:
-      - >
-        CREATE TABLE enriched AS
-        SELECT t.*, b.timestamp
-        FROM transfers t
-        JOIN blocks b ON b.number = t.block_number
-```
-
----
-
-## Custom Steps with Polars
+## Custom Steps with Polars (Python only)
 
 The Polars step lets you plug any Python function directly into the pipeline. When the step runs, tiders converts every in-memory PyArrow table into a `polars.DataFrame`, calls your function with all of them at once, and then converts the results back to PyArrow tables so the rest of the pipeline can continue.
 
 Your function receives two arguments:
 
 - `data` — a `dict[str, pl.DataFrame]` mapping table names (e.g. `"transfers"`, `"blocks"`) to their current Polars DataFrames.
-- `ctx` — the optional `context` value you set in the config, useful for passing parameters like thresholds, chain IDs, or lookup tables without hard-coding them.
+- `context` — any value (a dict, scalar, list, etc.) passed via `context` in the config , it exports this varible from the pipeline to the callable python function. Useful for parameterizing the function without hard-coding values. It is `None` when not set.
 
 The function must return a `dict[str, pl.DataFrame]`. You can return the same tables with modifications, drop tables, or add new ones — whatever is in the returned dict becomes the new state of the pipeline's data for subsequent steps.
 
 Requires `pip install tiders[polars]`.
 
-**Python**
-
 ```python
 import polars as pl
 import tiders as cc
 
-def my_transform(data: dict[str, pl.DataFrame], ctx) -> dict[str, pl.DataFrame]:
-    threshold = ctx["threshold"] if ctx else 0
+def my_transform(data: dict[str, pl.DataFrame], context) -> dict[str, pl.DataFrame]:
+    threshold = context["threshold"] if context else 0
     transfers = data["transfers"]
     # filter low-value transfers and add a normalized column
-    transfers = (
+    data["transfers"] = (
         transfers
         .filter(pl.col("value") > threshold)
         .with_columns((pl.col("value") / 1e18).alias("value_eth"))
     )
-    return {**data, "transfers": transfers}
+    data.pop("raw_logs")
+    return data # returned data dict will include the original inputs tables, except "raw_logs" (popped) and the add (or updated) table "transfer"
 
 cc.Step(
     kind=cc.StepKind.POLARS,
     config=cc.PolarsStepConfig(
         runner=my_transform,
-        context={"threshold": 1_000_000},   # optional — passed as ctx to the function
+        context={"threshold": 1_000_000},   # optional — variable passed as context to the function, in this case a dict.
     ),
 )
 ```
 
-**yaml**
-
-In yaml, the function is loaded from an external Python file. The file must define the function at the module level with the same `(data, ctx)` signature.
-
-```yaml
-- kind: python_file
-  config:
-    file: ./steps/my_step.py    # required — path to the Python file
-    function: my_transform      # required — name of the function to call
-    step_type: polars           # required — tells tiders to use Polars DataFrames
-    context:                    # optional — passed as ctx to the function
-      threshold: 1000000
-```
-
 ---
 
-## Custom Steps with DataFusion
+## Custom Steps with DataFusion (Python only)
 
-The DataFusion step works similarly to the Polars step, but uses [Apache DataFusion](https://datafusion.apache.org/) as the execution engine, which lets you write SQL queries against the pipeline tables within your custom function.
+The DataFusion step uses [Apache DataFusion](https://datafusion.apache.org/) as the execution engine, which lets you write SQL queries against the pipeline tables within your custom function.
 
-When the step runs, tiders creates a fresh `datafusion.SessionContext`, registers every in-memory PyArrow table as a DataFusion DataFrame inside it, and calls your function. Your function can run SQL queries through `session_ctx.sql(...)`, transform DataFrames using DataFusion's API, or combine both. The returned DataFrames are then converted back to PyArrow tables for the next step.
+When the step runs, tiders creates a fresh `datafusion.SessionContext`, registers every in-memory PyArrow table as a DataFusion DataFrame inside it, and calls your function. Your function can run SQL queries through `session_ctx.sql(...)`, transform DataFrames using DataFusion's DataFrame API, or combine both. The returned DataFrames are converted back to PyArrow tables for the next step.
 
 Your function receives three arguments:
 
-- `session_ctx` — the `datafusion.SessionContext` with all tables already registered by name, so you can query them directly with SQL.
-- `data` — a `dict[str, datafusion.DataFrame]` mapping table names to their DataFusion DataFrames, for direct DataFrame API access.
-- `ctx` — the optional `context` value you set in the config.
+- `session_ctx` — the `datafusion.SessionContext` with all current tables already registered by name, so you can query them directly with SQL.
+- `data` — a `dict[str, datafusion.DataFrame]` mapping table names to their DataFusion DataFrames. It's a convenience shortcut for the DataFrame API — equivalent to calling `session_ctx.table(name)` for each table and useful to construct the returning data.
+- `context` — any value (a dict, scalar, list, etc.) passed via `context` in the config , it exports this varible from the pipeline to the callable python function. Useful for parameterizing the function without hard-coding values. It is `None` when not set.
 
-The function must return a `dict[str, datafusion.DataFrame]`. As with the Polars step, the returned dict becomes the new pipeline state.
+The function must return a `dict[str, datafusion.DataFrame]`. The returned dict becomes the new pipeline state. User is responsible to manage the returning dict. include unchanged tables by spreading `data` into the return value.
 
 Requires `pip install tiders[datafusion]`.
-
-**Python**
 
 ```python
 import datafusion
 import tiders as cc
 
-def my_sql_transform(session_ctx, data, ctx):
-    min_block = ctx["min_block"] if ctx else 0
-    # SQL runs against tables registered by name in the session context
-    enriched = session_ctx.sql(f"""
+def my_sql_transform(session_ctx, data, context):
+    min_block = context["min_block"] if context else 0
+    data["transfers"] = session_ctx.sql(f"""
         SELECT t.*, b.timestamp
         FROM transfers t
         JOIN blocks b ON b.number = t.block_number
         WHERE t.block_number >= {min_block}
     """)
-    return {**data, "transfers": enriched}
+    data.pop("raw_logs")
+    return data # returned data dict will include the original inputs tables, except "raw_logs" (popped) and the added (or updated) table "transfer"
 
 cc.Step(
     kind=cc.StepKind.DATAFUSION,
     config=cc.DataFusionStepConfig(
         runner=my_sql_transform,
-        context={"min_block": 18_500_000},   # optional — passed as ctx to the function
+        context={"min_block": 18_500_000},   # optional — variable passed as context to the function, in this case a dict.
     ),
 )
 ```
 
-**yaml**
+---
 
-In yaml, the function is loaded from an external Python file. The file must define the function at the module level with the same `(session_ctx, data, ctx)` signature.
+## Python File (yaml only)
+
+The `python_file` kind is the yaml equivalent of the Polars and DataFusion custom steps. It imports a `.py` file as a module, looks up the named function, and runs it as either a Polars or DataFusion step depending on `step_type`.
+
+The file path is resolved relative to the yaml config file's directory. The function must be defined at the module level (not nested inside another function or class).
+
+**Polars**
+
+Set `step_type: polars`. The function must use the `(data, context)` signature described in [Custom Steps with Polars](#custom-steps-with-polars).
+
+`./steps/my_step.py`:
+
+```python
+import polars as pl
+
+def my_transform(data: dict[str, pl.DataFrame], context) -> dict[str, pl.DataFrame]:
+    threshold = context["threshold"] if context else 0
+    transfers = data["transfers"]
+    transfers = (
+        transfers
+        .filter(pl.col("value") > threshold)
+        .with_columns((pl.col("value") / 1e18).alias("value_eth"))
+    )
+    data["transfers"] = transfers
+    return data
+```
 
 ```yaml
 - kind: python_file
   config:
-    file: ./steps/my_step.py      # required — path to the Python file
-    function: my_sql_transform    # required — name of the function to call
-    step_type: datafusion         # required — tells tiders to use DataFusion
-    context:                      # optional — passed as ctx to the function
+    file: ./steps/my_step.py    # required — path to the .py file, relative to the yaml config
+    function: my_transform      # required — module-level function name to call
+    step_type: polars           # required — "polars" or "datafusion" (default: datafusion)
+    context:                    # optional — any yaml value, passed as context to the function
+      threshold: 1000000
+```
+
+**DataFusion**
+
+Set `step_type: datafusion` (or omit it, since datafusion is the default). The function must use the `(session_ctx, data, context)` signature described in [Custom Steps with DataFusion](#custom-steps-with-datafusion).
+
+`./steps/my_step.py`:
+
+```python
+def my_sql_transform(session_ctx, data, context):
+    min_block = context["min_block"] if context else 0
+    data["transfers"] = session_ctx.sql(f"""
+        SELECT t.*, b.timestamp
+        FROM transfers t
+        JOIN blocks b ON b.number = t.block_number
+        WHERE t.block_number >= {min_block}
+    """)
+    return data
+```
+
+```yaml
+- kind: python_file
+  config:
+    file: ./steps/my_step.py      # required — path to the .py file, relative to the yaml config
+    function: my_sql_transform    # required — module-level function name to call
+    step_type: datafusion         # optional — default when step_type is omitted
+    context:                      # optional — any yaml value, passed as context to the function
       min_block: 18500000
+```
+
+---
+
+## SQL (yaml only)
+
+The `sql` kind is a yaml-only convenience step that lets you write DataFusion SQL directly in your config file without needing a separate Python file. Under the hood it builds a DataFusion runner and executes each query sequentially against the current in-memory tables.
+
+All in-memory tables are available by name in every query. Queries run in order, and the output of one query is available to the next. Each query's result is stored back into the pipeline data:
+
+- `CREATE TABLE name AS SELECT ...` — the parser use regex to stores the resulting `name`, including it in the output dict for subsequent steps/writer.
+- Plain `SELECT ...` (without `CREATE TABLE AS`) — stores the result under the default key `sql_result`, overwriting the previous value if multiple plain selects are used.
+
+Existing tables not referenced in any query are preserved unchanged.
+
+**yaml**
+
+```yaml
+- kind: sql
+  config:
+    queries:                        # required — one or more SQL strings, run in order
+      - >
+        CREATE TABLE transfers AS
+        SELECT *
+        FROM logs
+        WHERE topic0 = '0xddf252ad...'
+      - >
+        CREATE OR REPLACE TABLE enriched AS
+        SELECT t.*, b.timestamp
+        FROM transfers t
+        JOIN blocks b ON b.number = t.block_number
 ```
