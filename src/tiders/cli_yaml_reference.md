@@ -135,8 +135,8 @@ Decode EVM log events using an ABI signature
 - kind: evm_decode_events
   config:
     event_signature: "Transfer(address indexed from, address indexed to, uint256 amount)"
-    output_table: transfers        # optional — name of the output table for decoded results, default: "logs"
-    input_table: logs              # optional — name of the input table to decode, default: "decoded_logs"
+    output_table: transfers        # optional — name of the output table for decoded results, default: "decoded_logs"
+    input_table: logs              # optional — name of the input table to decode, default: "logs"
     allow_decode_fail: true        # optional — when True rows that fails are nulls values instead of raising an error, default: False
     filter_by_topic0: false        # optional — when True only rows whose ``topic0`` matches the event topic0 are decoded, default: False
     hstack: true                   # optional — when True decoded columns are horizontally stacked with the input columns, default: True
