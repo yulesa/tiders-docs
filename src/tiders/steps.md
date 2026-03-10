@@ -25,6 +25,8 @@ Steps are transformations applied to each batch of data before writing. They run
 
 Decodes raw log `data` and `topic` fields into typed columns using an ABI event signature:
 
+**Python**
+
 ```python
 cc.Step(
     kind=cc.StepKind.EVM_DECODE_EVENTS,
@@ -36,9 +38,24 @@ cc.Step(
 )
 ```
 
+**yaml**
+
+```yaml
+- kind: evm_decode_events
+  config:
+    event_signature: "Transfer(address indexed from, address indexed to, uint256 amount)"
+    output_table: transfers       # default: decoded_logs
+    input_table: logs             # default: logs
+    allow_decode_fail: true       # default: false
+    filter_by_topic0: false       # default: false
+    hstack: true                  # default: true
+```
+
 ## Hex Encode
 
 Converts all binary columns to hex-encoded strings for readability:
+
+**Python**
 
 ```python
 cc.Step(
@@ -47,9 +64,20 @@ cc.Step(
 )
 ```
 
+**yaml**
+
+```yaml
+- kind: hex_encode
+  config:
+    tables: [transfers]   # optional — apply to specific tables only
+    prefixed: true        # default: true — add 0x prefix
+```
+
 ## Cast By Type
 
 Cast all columns of a given Arrow type to another type:
+
+**Python**
 
 ```python
 import pyarrow as pa
@@ -64,7 +92,38 @@ cc.Step(
 )
 ```
 
+**yaml**
+
+```yaml
+- kind: cast_by_type
+  config:
+    from_type: "decimal256(76,0)"
+    to_type: "decimal128(38,0)"
+    allow_cast_fail: true
+```
+
+Supported type strings: `int8`–`int64`, `uint8`–`uint64`, `float16`–`float64`, `string`, `binary`, `bool`, `date32`, `date64`, `null`, `decimal128(p,s)`, `decimal256(p,s)`.
+
+## SQL (yaml only)
+
+Run DataFusion SQL queries against the in-memory tables. Results from `CREATE TABLE name AS ...` are stored under `name`; plain `SELECT` results are stored as `sql_result`.
+
+**yaml**
+
+```yaml
+- kind: sql
+  config:
+    queries:
+      - >
+        CREATE TABLE enriched AS
+        SELECT t.*, b.timestamp
+        FROM transfers t
+        JOIN blocks b ON b.number = t.block_number
+```
+
 ## Custom Steps with Polars
+
+**Python**
 
 ```python
 import polars as pl
@@ -80,7 +139,19 @@ cc.Step(
 )
 ```
 
+**yaml**
+
+```yaml
+- kind: python_file
+  config:
+    file: ./steps/my_step.py
+    function: my_transform
+    step_type: polars
+```
+
 ## Custom Steps with DataFusion
+
+**Python**
 
 ```python
 import datafusion
@@ -93,4 +164,14 @@ cc.Step(
     kind=cc.StepKind.DATAFUSION,
     config=cc.DataFusionStepConfig(runner=my_sql_transform),
 )
+```
+
+**yaml**
+
+```yaml
+- kind: python_file
+  config:
+    file: ./steps/my_step.py
+    function: my_sql_transform
+    step_type: datafusion
 ```

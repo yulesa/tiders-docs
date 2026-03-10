@@ -20,6 +20,8 @@ from tiders_core.ingest import ProviderConfig, ProviderKind
 
 ### HyperSync
 
+**Python**
+
 ```python
 provider = ProviderConfig(
     kind=ProviderKind.HYPERSYNC,
@@ -27,7 +29,18 @@ provider = ProviderConfig(
 )
 ```
 
+**yaml**
+
+```yaml
+provider:
+  kind: hypersync
+  url: ${PROVIDER_URL}
+  bearer_token: ${HYPERSYNC_BEARER_TOKEN}  # optional
+```
+
 ### SQD
+
+**Python**
 
 ```python
 # EVM
@@ -43,9 +56,25 @@ provider = ProviderConfig(
 )
 ```
 
+**yaml**
+
+```yaml
+# EVM
+provider:
+  kind: sqd
+  url: ${PROVIDER_URL}
+
+# SVM (Solana)
+provider:
+  kind: sqd
+  url: ${PROVIDER_URL}
+```
+
 ### RPC
 
 Use any standard EVM JSON-RPC endpoint (Alchemy, Infura, QuickNode, local node, etc.):
+
+**Python**
 
 ```python
 provider = ProviderConfig(
@@ -54,6 +83,16 @@ provider = ProviderConfig(
     stop_on_head=True,   # stop when reaching chain head
     batch_size=10,        # number of blocks per batch
 )
+```
+
+**yaml**
+
+```yaml
+provider:
+  kind: rpc
+  url: ${PROVIDER_URL}
+  stop_on_head: true   # optional
+  batch_size: 10       # optional
 ```
 
 The RPC provider uses [tiders-rpc-client](../tiders-rpc-client/overview.md) under the hood, which supports adaptive concurrency, retry logic, and streaming.

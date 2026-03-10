@@ -14,6 +14,8 @@ A query has:
 
 ## EVM Queries
 
+**Python**
+
 ```python
 from tiders_core.ingest import evm
 
@@ -29,9 +31,23 @@ query = Query(
 )
 ```
 
+**yaml**
+
+```yaml
+query:
+  kind: evm
+  from_block: 18000000
+  to_block: 18001000        # optional
+  logs: [...]
+  transactions: [...]
+  fields: {...}
+```
+
 ### Log Requests
 
 Filter logs by contract address and/or topic:
+
+**Python**
 
 ```python
 evm.LogRequest(
@@ -41,7 +57,20 @@ evm.LogRequest(
 )
 ```
 
+**yaml**
+
+```yaml
+query:
+  kind: evm
+  logs:
+    - address: "0xdAC17F958D2ee523a2206206994597C13D831ec7"  # optional
+      topic0: "Transfer(address,address,uint256)"             # signature or 0x hex hash
+      include_blocks: true
+```
+
 ### Transaction Requests
+
+**Python**
 
 ```python
 evm.TransactionRequest(
@@ -50,9 +79,21 @@ evm.TransactionRequest(
 )
 ```
 
+**yaml**
+
+```yaml
+query:
+  kind: evm
+  transactions:
+    - include_blocks: true
+      include_logs: true
+```
+
 ### Field Selection
 
 Select only the columns you need:
+
+**Python**
 
 ```python
 evm.Fields(
@@ -62,7 +103,30 @@ evm.Fields(
 )
 ```
 
+**yaml**
+
+```yaml
+query:
+  kind: evm
+  fields:
+    block: [number, timestamp, hash]
+    transaction: [hash, from, to, value]
+    log: [block_number, address, topic0, data]
+```
+
+Fields can also be specified as a `{name: true/false}` mapping:
+
+```yaml
+fields:
+  log:
+    address: true
+    data: true
+    block_number: true
+```
+
 ## SVM Queries
+
+**Python**
 
 ```python
 from tiders_core.ingest import svm
@@ -89,4 +153,22 @@ query = Query(
         ),
     ),
 )
+```
+
+**yaml**
+
+```yaml
+query:
+  kind: svm
+  from_block: 330000000
+  to_block: 330001000
+  include_all_blocks: true
+  instructions:
+    - program_id: ["JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4"]
+      discriminator: ["0xe445a52e51cb9a1d40c6cde8260871e2"]
+      include_transactions: true
+  fields:
+    instruction: [block_slot, program_id, data]
+    block: [hash, timestamp]
+    transaction: [signature]
 ```
