@@ -606,8 +606,9 @@ The `sql` kind is a yaml-only convenience step that lets you write DataFusion SQ
 
 All in-memory tables are available by name in every query. Queries run in order, and the output of one query is available to the next. Each query's result is stored back into the pipeline data:
 
-- `CREATE TABLE name AS SELECT ...` — the parser use regex to stores the resulting `name`, including it in the output dict for subsequent steps/writer.
-- Plain `SELECT ...` (without `CREATE TABLE AS`) — stores the result under the default key `sql_result`, overwriting the previous value if multiple plain selects are used.
+- `CREATE TABLE name AS SELECT ...` — stores the result under `name`, making it available for subsequent steps and for the writer. `CREATE OR REPLACE TABLE` and `CREATE TABLE IF NOT EXISTS` are also supported.
+- `CREATE VIEW name AS SELECT ...` — same as above; the view is registered in the session and stored under `name`.
+- Plain `SELECT ...` — stores the result under the key `sql_result`, overwriting the previous value if multiple plain selects are used.
 
 Existing tables not referenced in any query are preserved unchanged.
 

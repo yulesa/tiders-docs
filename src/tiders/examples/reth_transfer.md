@@ -17,10 +17,10 @@ tiders start
 
 1. **Queries** logs matching the `Transfer` event from the rETH contract via HyperSync
 2. **Decodes** the raw log data into typed `from`, `to`, and `amount` columns
-3. **Casts** `decimal256` to `decimal128` for compatibility
+3. **Casts** `decimal256` to `decimal128`, unnecessary for PyArrow dataset (Parquet), but include if writer doesn't support decimal256 values
 4. **Hex-encodes** binary fields for readability
-5. **Joins** transfer data with block timestamps via SQL
-6. **Writes** to a Delta Lake table
+5. **Joins** decoded transfer data with block timestamps via SQL step, so the transfer table include a timestamp
+6. **Writes** to a PyArrow dataset
 
 ## Full config
 
@@ -45,7 +45,8 @@ query:
   from_block: 13325304
   to_block: 13325404
   logs:
-    - topic0: "Transfer(address,address,uint256)"
+    - address: RocketTokenRETH.address
+      topic0: "Transfer(address,address,uint256)"
       include_blocks: true
   fields:
     log: [address, topic0, topic1, topic2, topic3, data, block_number, transaction_hash, log_index]
@@ -71,14 +72,15 @@ steps:
     config:
       queries:
         - >
+          CREATE OR REPLACE TABLE transfers AS
           SELECT transfers.*, blocks.timestamp AS block_timestamp
           FROM transfers
           INNER JOIN blocks ON blocks.number = transfers.block_number
 
 writer:
-  kind: delta_lake
+  kind: pyarrow_dataset
   config:
-    data_uri: data/pyarrow
+    base_dir: data/pyarrow
 ```
 
 ## Key concepts
@@ -87,7 +89,7 @@ writer:
 
 **Decode step** — `evm_decode_events` reads the raw `topic1`, `topic2`, and `data` columns and produces typed `from`, `to`, and `amount` columns in a new `transfers` table.
 
-**Cast step** — EVM `uint256` values are decoded as `decimal256(76,0)`. The `cast_by_type` step downcasts them to `decimal128(38,0)` for Delta Lake compatibility.
+**Cast step** — EVM `uint256` values are decoded as `decimal256(76,0)`. The `cast_by_type` step downcasts them to `decimal128(38,0)`. This is step is dispensable in PyArrow datasets (Parquet), but necessary in databases that don't support `decimal256(76,0)`.
 
 **SQL step** — the `sql` step runs DataFusion SQL against the in-memory tables. Both `transfers` and `blocks` are available because `include_blocks: true` was set on the log request.
 

@@ -19,10 +19,10 @@
 - [Steps](./tiders/steps.md)
 - [Writers](./tiders/writers.md)
 - [Examples](./tiders/examples.md)
-  - [ERC-20 Transfers (EVM)](./tiders/examples/erc20_transfers.md)
-  - [Jupiter Swaps (SVM)](./tiders/examples/jup_swaps.md)
-  - [RPC Pipeline](./tiders/examples/rpc_pipeline.md)
   - [rETH Transfers (No-Code)](./tiders/examples/reth_transfer.md)
+  - [ERC-20 Transfers (EVM)](./tiders/examples/erc20_transfers.md)
+  - [RPC Pipeline](./tiders/examples/rpc_pipeline.md)
+  - [Jupiter Swaps (SVM)](./tiders/examples/jup_swaps.md)
 
 # Core Libraries (tiders-core)
 
