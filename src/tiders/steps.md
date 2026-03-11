@@ -363,17 +363,23 @@ cc.Step(
 ```
 
 ---
+-->
 
 ## Join Block Data
 
-Joins block fields into other tables by matching on `block_number` (EVM) or `block_slot` (SVM).
+Joins block fields into other tables using a left outer join. Column collisions are prefixed with `<block_table_name>_`.
 
 **Python**
 
 ```python
 cc.Step(
     kind=cc.StepKind.JOIN_BLOCK_DATA,
-    config=None,
+    config=cc.JoinBlockDataConfig(
+        tables=["logs"],                # optional — list of tables to join into; default: all tables except the block table
+        block_table_name="blocks",      # optional — name of the blocks table, default: "blocks"
+        join_left_on=["block_number"],  # optional — join key on the left (child) table, default: ["block_number"]
+        join_blocks_on=["number"],      # optional — join key on the blocks table, default: ["number"]
+    ),
 )
 ```
 
@@ -381,20 +387,29 @@ cc.Step(
 
 ```yaml
 - kind: join_block_data
+  config:
+    tables: [logs]               # optional — tables to join into; default: all tables except the block table
+    block_table_name: blocks     # optional, default: "blocks"
+    join_left_on: [block_number] # optional, default: ["block_number"]
+    join_blocks_on: [number]     # optional, default: ["number"]
 ```
 
 ---
 
 ## Join EVM Transaction Data
 
-Joins EVM transaction fields into other tables by matching on `transaction_hash`.
-
+Joins EVM transaction fields into other tables using a left outer join. Column collisions are prefixed with `<tx_table_name>_`.
 **Python**
 
 ```python
 cc.Step(
     kind=cc.StepKind.JOIN_EVM_TRANSACTION_DATA,
-    config=None,
+    config=cc.JoinEvmTransactionDataConfig(
+        tables=["logs"],                   # optional — list of tables to join into; default: all tables except the transactions table
+        tx_table_name="transactions",      # optional — name of the transactions table, default: "transactions"
+        join_left_on=["block_number", "transaction_index"],        # optional — join key on the left table, default: ["block_number", "transaction_index"]
+        join_transactions_on=["block_number", "transaction_index"],# optional — join key on the transactions table, default: ["block_number", "transaction_index"]
+    ),
 )
 ```
 
@@ -402,20 +417,30 @@ cc.Step(
 
 ```yaml
 - kind: join_evm_transaction_data
+  config:
+    tables: [logs]                                           # optional — tables to join into; default: all except the transactions table
+    tx_table_name: transactions                              # optional, default: "transactions"
+    join_left_on: [block_number, transaction_index]          # optional, default: ["block_number", "transaction_index"]
+    join_transactions_on: [block_number, transaction_index]  # optional, default: ["block_number", "transaction_index"]
 ```
 
 ---
 
 ## Join SVM Transaction Data
 
-Joins SVM transaction fields into other tables by matching on `transaction_index` and `block_slot`.
+Joins SVM transaction fields into other tables using a left outer join. Column collisions are prefixed with `<tx_table_name>_`.
 
 **Python**
 
 ```python
 cc.Step(
     kind=cc.StepKind.JOIN_SVM_TRANSACTION_DATA,
-    config=None,
+    config=cc.JoinSvmTransactionDataConfig(
+        tables=["instructions"],           # optional — list of tables to join into; default: all tables except the transactions table
+        tx_table_name="transactions",      # optional — name of the transactions table, default: "transactions"
+        join_left_on=["block_slot", "transaction_index"],        # optional — join key on the left table, default: ["block_slot", "transaction_index"]
+        join_transactions_on=["block_slot", "transaction_index"],# optional — join key on the transactions table, default: ["block_slot", "transaction_index"]
+    ),
 )
 ```
 
@@ -423,9 +448,14 @@ cc.Step(
 
 ```yaml
 - kind: join_svm_transaction_data
+  config:
+    tables: [instructions]                                  # optional — tables to join into; default: all except the transactions table
+    tx_table_name: transactions                             # optional, default: "transactions"
+    join_left_on: [block_slot, transaction_index]           # optional, default: ["block_slot", "transaction_index"]
+    join_transactions_on: [block_slot, transaction_index]   # optional, default: ["block_slot", "transaction_index"]
 ```
 
---- -->
+---
 
 ## Set Chain ID
 

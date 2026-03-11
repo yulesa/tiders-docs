@@ -232,6 +232,45 @@ Base58-encode all binary columns
     tables: [instructions]   # optional — list of table names to process. When ``None``, all tables in the data dictionary are processed, default: None
 ```
 
+### `join_block_data`
+
+Join block fields into other tables (left outer join). Column collisions are prefixed with `<block_table_name>_`.
+
+```yaml
+- kind: join_block_data
+  config:
+    tables: [logs]               # optional — tables to join into; default: all tables except the block table
+    block_table_name: blocks     # optional, default: "blocks"
+    join_left_on: [block_number] # optional, default: ["block_number"]
+    join_blocks_on: [number]     # optional, default: ["number"]
+```
+
+### `join_evm_transaction_data`
+
+Join EVM transaction fields into other tables (left outer join). Column collisions are prefixed with `<tx_table_name>_`.
+
+```yaml
+- kind: join_evm_transaction_data
+  config:
+    tables: [logs]                                           # optional — tables to join into; default: all except the transactions table
+    tx_table_name: transactions                              # optional, default: "transactions"
+    join_left_on: [block_number, transaction_index]          # optional, default: ["block_number", "transaction_index"]
+    join_transactions_on: [block_number, transaction_index]  # optional, default: ["block_number", "transaction_index"]
+```
+
+### `join_svm_transaction_data`
+
+Join SVM transaction fields into other tables (left outer join). Column collisions are prefixed with `<tx_table_name>_`.
+
+```yaml
+- kind: join_svm_transaction_data
+  config:
+    tables: [instructions]                                  # optional — tables to join into; default: all except the transactions table
+    tx_table_name: transactions                             # optional, default: "transactions"
+    join_left_on: [block_slot, transaction_index]           # optional, default: ["block_slot", "transaction_index"]
+    join_transactions_on: [block_slot, transaction_index]   # optional, default: ["block_slot", "transaction_index"]
+```
+
 ### `set_chain_id`
 
 Add a chain_id column
