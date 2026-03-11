@@ -12,6 +12,7 @@ Writers define where the processed data is stored after each pipeline batch. Eac
 | `DELTA_LAKE` | Delta Lake | Data lake with versioning |
 | `PYARROW_DATASET` | Parquet files | Simple file-based storage |
 | `POSTGRESQL` | PostgreSQL | Relational storage, existing PostgreSQL instances |
+| `CSV` | CSV files | Simple text export, interoperability |
 
 Each table in the pipeline data is written as a separate table or directory named after its key (e.g. `"transfers"` → `transfers` table or `transfers/` directory).
 
@@ -244,6 +245,42 @@ writer:
     use_threads: true                    # optional, default: true
     create_dir: true                     # optional, default: true
     anchor_table: transfers              # optional — written last after all other tables
+```
+
+---
+
+## CSV
+
+Writes Arrow tables as CSV files using `pyarrow.csv.write_csv`. Each table is written to `<base_dir>/<table_name>.csv`. On successive pushes the file is appended to. All tables except the `anchor_table` are written in parallel.
+
+**Python**
+
+```python
+import tiders as cc
+
+writer = cc.Writer(
+    kind=cc.WriterKind.CSV,
+    config=cc.CsvWriterConfig(
+        base_dir="./data/output",       # required — root directory; each table is written to <base_dir>/<table_name>.csv
+        delimiter=",",                  # optional — field delimiter character, default: ","
+        include_header=True,            # optional — write a header row, default: True
+        create_dir=True,                # optional — create output directory if missing, default: True
+        anchor_table="transfers",       # optional — written last after all other tables
+    ),
+)
+```
+
+**yaml**
+
+```yaml
+writer:
+  kind: csv
+  config:
+    base_dir: data/output        # required
+    delimiter: ","               # optional, default: ","
+    include_header: true         # optional, default: true
+    create_dir: true             # optional, default: true
+    anchor_table: transfers      # optional — written last after all other tables
 ```
 
 ---

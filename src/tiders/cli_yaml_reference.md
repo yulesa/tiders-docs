@@ -348,6 +348,19 @@ writer:
     create_dir: true               # optional — create output directory if missing, default: true
 ```
 
+### CSV
+
+```yaml
+writer:
+  kind: csv
+  config:
+    base_dir: data/output        # required — root directory for all output CSV files
+    delimiter: ","               # optional, default: ","
+    include_header: true         # optional, default: true
+    create_dir: true             # optional — create output directory if missing, default: true
+    anchor_table: transfers      # optional — table written last, for ordering guarantees
+```
+
 ### PostgreSQL
 
 ```yaml
