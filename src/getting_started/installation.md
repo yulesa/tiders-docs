@@ -52,6 +52,7 @@ Depending on your selected writer or transformation engine, you may need additio
 |---|---|
 | DuckDB | `duckdb` |
 | ClickHouse | `clickhouse-connect` |
+| PostgreSQL | `postgresql` |
 | Iceberg | `pyiceberg` |
 | DeltaLake | `deltalake` |
 

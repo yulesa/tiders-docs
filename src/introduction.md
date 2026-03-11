@@ -39,7 +39,7 @@ Tiders is composed of three repositories:
 - **Multiple data providers** — HyperSync, SQD, and standard RPC endpoints
 - **EVM and SVM support** — Ethereum and Solana blockchains
 - **Built-in decoding** — ABI event decoding (EVM) and instruction decoding (SVM)
-- **Flexible output** — ClickHouse, Iceberg, DeltaLake, DuckDB, Parquet
+- **Flexible output** — ClickHouse, PostgreSQL, DuckDB, Parquet, Iceberg, DeltaLake, DuckDB, Parquet
 - **Streaming architecture** — parallelized ingestion, processing, and writing
 
 ## API Reference

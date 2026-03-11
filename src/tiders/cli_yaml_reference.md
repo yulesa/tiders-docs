@@ -348,6 +348,22 @@ writer:
     create_dir: true               # optional — create output directory if missing, default: true
 ```
 
+### PostgreSQL
+
+```yaml
+writer:
+  kind: postgresql
+  config:
+    host: localhost               # required — PostgreSQL server hostname
+    dbname: mydb                  # required — database name
+    port: 5432                    # optional, default: 5432
+    user: postgresql              # optional, default: postgresql
+    password: ${PG_PASSWORD}      # optional
+    schema: public                # optional — PostgreSQL schema (namespace), default: public
+    create_tables: true           # optional — auto-create tables on first push, default: true
+    anchor_table: transfers       # optional — table written last, for ordering guarantees
+```
+
 ---
 
 ## `table_aliases`
