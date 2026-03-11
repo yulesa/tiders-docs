@@ -60,6 +60,7 @@ For transformation steps:
 | Step engine | Extra package |
 |---|---|
 | Polars | `polars` |
+| Pandas | `pandas` |
 | DataFusion | `datafusion` |
 
 ```bash

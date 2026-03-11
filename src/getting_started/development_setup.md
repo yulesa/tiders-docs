@@ -10,7 +10,7 @@ git clone https://github.com/yulesa/tiders-rpc-client.git
 
 ## Building `tiders-core` and `tiders-rpc-client` from source
 
-If you're modifying this repo locally, you probably want `tiders-core` to build against your local version.
+If you're modifying `tiders-rpc-client` repo locally, you probably want `tiders-core` to build against your local version.
 
 Build `tiders-rpc-client` locally:
 ```bash
@@ -27,8 +27,24 @@ cargo build --config 'patch.crates-io.tiders-rpc-client.path="../tiders-rpc-clie
 
 # Build Python bindings with the same patch
 cd python
-maturin develop --release --config 'patch.crates-io.tiders-rpc-client.path="../../tiders-rpc-client/rust"'
+maturin develop --config 'patch.crates-io.tiders-rpc-client.path="../../tiders-rpc-client/rust"'
+# If using uv
+maturin develop --uv --config 'patch.crates-io.tiders-rpc-client.path="../../tiders-rpc-client/rust"'
 ```
+
+If you're modifying `tiders-core` repo locally, you probably want `tiders` to use your local `tiders-core` version.
+
+Build `tiders-core` as described above, or just `cargo build` if you haven't modified tiders-rpc-client.
+
+Use local `tiders-core` in your enviroment, overriding the PyPI version:
+
+```bash
+cd tiders
+pip install -e ".[all]"
+# If using uv
+uv pip install -e ".[all]"
+```
+
 
 ## Persistent local development
 

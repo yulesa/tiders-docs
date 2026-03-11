@@ -267,7 +267,7 @@ Load a custom step function from an external Python file. Paths are relative to 
   config:
     file: ./steps/my_step.py
     function: transform          # callable name in the file
-    step_type: datafusion        # datafusion (default) or polars
+    step_type: datafusion        # datafusion (default), polars, or pandas
     context:                     # optional — passed as ctx to the function
       threshold: 100
 ```

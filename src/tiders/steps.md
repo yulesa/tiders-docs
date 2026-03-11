@@ -25,6 +25,7 @@ Here's an overview of how transformation steps work:
 | `JOIN_SVM_TRANSACTION_DATA` | `join_svm_transaction_data` | Join SVM transaction fields into other tables |
 | `SET_CHAIN_ID` | `set_chain_id` | Add a constant `chain_id` column to all tables |
 | `POLARS` | — | Custom transformation using Polars DataFrames |
+| `PANDAS` | — | Custom transformation using Pandas DataFrames |
 | `DATAFUSION` | — | Custom transformation using DataFusion |
 | — | `python_file` | Load a custom Polars or DataFusion function from a .py file (yaml only) |
 | — | `sql` | Run DataFusion SQL queries (yaml only) |
@@ -460,7 +461,7 @@ Your function receives two arguments:
 - `data` — a `dict[str, pl.DataFrame]` mapping table names (e.g. `"transfers"`, `"blocks"`) to their current Polars DataFrames.
 - `context` — any value (a dict, scalar, list, etc.) passed via `context` in the config , it exports this varible from the pipeline to the callable python function. Useful for parameterizing the function without hard-coding values. It is `None` when not set.
 
-The function must return a `dict[str, pl.DataFrame]`. You can return the same tables with modifications, drop tables, or add new ones — whatever is in the returned dict becomes the new state of the pipeline's data for subsequent steps.
+The function must return a `dict[str, pl.DataFrame]` mapping table name to tables. You can return the same tables with modifications, drop tables, or add new ones — whatever is in the returned dict becomes the new state of the pipeline's data for subsequent steps.
 
 Requires `pip install tiders[polars]`.
 
@@ -491,6 +492,44 @@ cc.Step(
 
 ---
 
+## Custom Steps with Pandas (Python only)
+
+The Pandas step lets you plug any Python function directly into the pipeline. When the step runs, tiders converts every in-memory PyArrow table into a `pandas.DataFrame`, calls your function with all of them at once, and then converts the results back to PyArrow tables so the rest of the pipeline can continue.
+
+Your function receives two arguments:
+
+- `data` — a `dict[str, pd.DataFrame]` mapping table names (e.g. `"transfers"`, `"blocks"`) to their current Pandas DataFrames.
+- `context` — any value (a dict, scalar, list, etc.) passed via `context` in the config, it exports this variable from the pipeline to the callable python function. Useful for parameterizing the function without hard-coding values. It is `None` when not set.
+
+The function must return a `dict[str, pd.DataFrame]` mapping table name to tables. You can return the same tables with modifications, drop tables, or add new ones — whatever is in the returned dict becomes the new state of the pipeline's data for subsequent steps.
+
+Requires `pip install tiders[pandas]`.
+
+```python
+import pandas as pd
+import tiders as cc
+
+def my_transform(data: dict[str, pd.DataFrame], context) -> dict[str, pd.DataFrame]:
+    threshold = context["threshold"] if context else 0
+    transfers = data["transfers"]
+    # filter low-value transfers and add a normalized column
+    transfers = transfers[transfers["value"] > threshold].copy()
+    transfers["value_eth"] = transfers["value"] / 1e18
+    data["transfers"] = transfers
+    data.pop("raw_logs")
+    return data  # returned data dict will include the original inputs tables, except "raw_logs" (popped) and the added (or updated) table "transfers"
+
+cc.Step(
+    kind=cc.StepKind.PANDAS,
+    config=cc.PandasStepConfig(
+        runner=my_transform,
+        context={"threshold": 1_000_000},   # optional — variable passed as context to the function, in this case a dict.
+    ),
+)
+```
+
+---
+
 ## Custom Steps with DataFusion (Python only)
 
 The DataFusion step uses [Apache DataFusion](https://datafusion.apache.org/) as the execution engine, which lets you write SQL queries against the pipeline tables within your custom function.
@@ -503,7 +542,7 @@ Your function receives three arguments:
 - `data` — a `dict[str, datafusion.DataFrame]` mapping table names to their DataFusion DataFrames. It's a convenience shortcut for the DataFrame API — equivalent to calling `session_ctx.table(name)` for each table and useful to construct the returning data.
 - `context` — any value (a dict, scalar, list, etc.) passed via `context` in the config , it exports this varible from the pipeline to the callable python function. Useful for parameterizing the function without hard-coding values. It is `None` when not set.
 
-The function must return a `dict[str, datafusion.DataFrame]`. The returned dict becomes the new pipeline state. User is responsible to manage the returning dict. include unchanged tables by spreading `data` into the return value.
+The function must return a `dict[str, datafusion.DataFrame]` mapping table name to tables. User is responsible to manage the returning dict. You can return the same tables with modifications, drop tables, or add new ones — whatever is in the returned dict becomes the new state of the pipeline's data for subsequent steps.
 
 Requires `pip install tiders[datafusion]`.
 
@@ -565,7 +604,35 @@ def my_transform(data: dict[str, pl.DataFrame], context) -> dict[str, pl.DataFra
   config:
     file: ./steps/my_step.py    # required — path to the .py file, relative to the yaml config
     function: my_transform      # required — module-level function name to call
-    step_type: polars           # required — "polars" or "datafusion" (default: datafusion)
+    step_type: polars           # required — "polars", "pandas", or "datafusion" (default: datafusion)
+    context:                    # optional — any yaml value, passed as context to the function
+      threshold: 1000000
+```
+
+**Pandas**
+
+Set `step_type: pandas`. The function must use the `(data, context)` signature described in [Custom Steps with Pandas](#custom-steps-with-pandas).
+
+`./steps/my_step.py`:
+
+```python
+import pandas as pd
+
+def my_transform(data: dict[str, pd.DataFrame], context) -> dict[str, pd.DataFrame]:
+    threshold = context["threshold"] if context else 0
+    transfers = data["transfers"]
+    transfers = transfers[transfers["value"] > threshold].copy()
+    transfers["value_eth"] = transfers["value"] / 1e18
+    data["transfers"] = transfers
+    return data
+```
+
+```yaml
+- kind: python_file
+  config:
+    file: ./steps/my_step.py    # required — path to the .py file, relative to the yaml config
+    function: my_transform      # required — module-level function name to call
+    step_type: pandas           # required — "polars", "pandas", or "datafusion" (default: datafusion)
     context:                    # optional — any yaml value, passed as context to the function
       threshold: 1000000
 ```
