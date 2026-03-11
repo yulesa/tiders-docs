@@ -2,24 +2,27 @@
 
 [Introduction](./introduction.md)
 
-# User Guide
+# Getting Started
 
-- [Getting Started](./getting_started.md)
-  - [Installation](./getting_started/installation.md)
-  - [Your First Pipeline](./getting_started/first_pipeline.md)
-  - [Development Setup](./getting_started/development_setup.md)
+- [Installation](./getting_started/installation.md)
+- [No-Code Quick Start](./getting_started/nocode_quick_start.md)
+- [Your First Pipeline](./getting_started/first_pipeline.md)
+- [Development Setup](./getting_started/development_setup.md)
 
 # Python SDK (tiders)
 
-- [Overview](./tiders/overview.md)
+- [Overview](./tiders/tiders_overview.md)
+- [CLI (No-Code Mode)](./tiders/cli_overview.md)
+  - [CLI YAML Reference](./tiders/cli_yaml_reference.md)
 - [Providers](./tiders/providers.md)
 - [Query](./tiders/query.md)
 - [Steps](./tiders/steps.md)
 - [Writers](./tiders/writers.md)
 - [Examples](./tiders/examples.md)
+  - [rETH Transfers (No-Code)](./tiders/examples/reth_transfer.md)
   - [ERC-20 Transfers (EVM)](./tiders/examples/erc20_transfers.md)
-  - [Jupiter Swaps (SVM)](./tiders/examples/jup_swaps.md)
   - [RPC Pipeline](./tiders/examples/rpc_pipeline.md)
+  - [Jupiter Swaps (SVM)](./tiders/examples/jup_swaps.md)
 
 # Core Libraries (tiders-core)
 

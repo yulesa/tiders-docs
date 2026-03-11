@@ -5,6 +5,14 @@
 /* Fonts: Inter for text, JetBrains Mono for code, Space Grotesk for title */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@700&display=swap');
 
+@font-face {
+    font-family: 'BinaryWaters';
+    src: url('../fonts/BinaryWaters.ttf') format('truetype');
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
 /* ---- Global overrides ---- */
 :root {
     --content-max-width: 1000px;
@@ -257,9 +265,9 @@ table td, table th {
 }
 
 .menu-title {
-    font-family: 'Space Grotesk', 'Inter', sans-serif;
-    font-weight: 700;
+    font-family: 'BinaryWaters', 'Space Grotesk', 'Inter', sans-serif !important;
+    font-weight: 700 !important;
     font-size: 4rem;
     color: var(--sidebar-active);
-    letter-spacing: -0.02em;
+    letter-spacing: 0.08em;
 }
