@@ -18,6 +18,8 @@ Each table in the pipeline data is written as a separate table or directory name
 
 All writers support automatic table creation. tiders infers the output schema from the Arrow data and creates tables accordingly. No manual schema definition is needed.
 
+A pipeline can write to more than one backend simultaneously by passing a list of writers. All writers receive the same processed data in parallel on each batch.
+
 
 ---
 

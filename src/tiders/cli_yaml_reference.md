@@ -278,6 +278,18 @@ Load a custom step function from an external Python file. Paths are relative to 
 
 See [Writers](./writers.md) for full details.
 
+`writer` accepts either a single writer mapping or a list of writer mappings to write to multiple backends in parallel:
+
+```yaml
+writer:
+  - kind: duckdb
+    config:
+      path: data/output.duckdb
+  - kind: csv
+    config:
+      base_dir: data/output
+```
+
 ### DuckDB
 
 ```yaml
