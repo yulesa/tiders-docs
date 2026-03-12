@@ -232,6 +232,45 @@ Base58-encode all binary columns
     tables: [instructions]   # optional — list of table names to process. When ``None``, all tables in the data dictionary are processed, default: None
 ```
 
+### `join_block_data`
+
+Join block fields into other tables (left outer join). Column collisions are prefixed with `<block_table_name>_`.
+
+```yaml
+- kind: join_block_data
+  config:
+    tables: [logs]               # optional — tables to join into; default: all tables except the block table
+    block_table_name: blocks     # optional, default: "blocks"
+    join_left_on: [block_number] # optional, default: ["block_number"]
+    join_blocks_on: [number]     # optional, default: ["number"]
+```
+
+### `join_evm_transaction_data`
+
+Join EVM transaction fields into other tables (left outer join). Column collisions are prefixed with `<tx_table_name>_`.
+
+```yaml
+- kind: join_evm_transaction_data
+  config:
+    tables: [logs]                                           # optional — tables to join into; default: all except the transactions table
+    tx_table_name: transactions                              # optional, default: "transactions"
+    join_left_on: [block_number, transaction_index]          # optional, default: ["block_number", "transaction_index"]
+    join_transactions_on: [block_number, transaction_index]  # optional, default: ["block_number", "transaction_index"]
+```
+
+### `join_svm_transaction_data`
+
+Join SVM transaction fields into other tables (left outer join). Column collisions are prefixed with `<tx_table_name>_`.
+
+```yaml
+- kind: join_svm_transaction_data
+  config:
+    tables: [instructions]                                  # optional — tables to join into; default: all except the transactions table
+    tx_table_name: transactions                             # optional, default: "transactions"
+    join_left_on: [block_slot, transaction_index]           # optional, default: ["block_slot", "transaction_index"]
+    join_transactions_on: [block_slot, transaction_index]   # optional, default: ["block_slot", "transaction_index"]
+```
+
 ### `set_chain_id`
 
 Add a chain_id column
@@ -267,7 +306,7 @@ Load a custom step function from an external Python file. Paths are relative to 
   config:
     file: ./steps/my_step.py
     function: transform          # callable name in the file
-    step_type: datafusion        # datafusion (default) or polars
+    step_type: datafusion        # datafusion (default), polars, or pandas
     context:                     # optional — passed as ctx to the function
       threshold: 100
 ```
@@ -277,6 +316,18 @@ Load a custom step function from an external Python file. Paths are relative to 
 ## `writer`
 
 See [Writers](./writers.md) for full details.
+
+`writer` accepts either a single writer mapping or a list of writer mappings to write to multiple backends in parallel:
+
+```yaml
+writer:
+  - kind: duckdb
+    config:
+      path: data/output.duckdb
+  - kind: csv
+    config:
+      base_dir: data/output
+```
 
 ### DuckDB
 
@@ -346,6 +397,35 @@ writer:
     partitioning_flavor: hive      # optional — partitioning flavor (e.g. hive)
     max_rows_per_file: 1000000     # optional — max rows per output file, default: 0 (unlimited)
     create_dir: true               # optional — create output directory if missing, default: true
+```
+
+### CSV
+
+```yaml
+writer:
+  kind: csv
+  config:
+    base_dir: data/output        # required — root directory for all output CSV files
+    delimiter: ","               # optional, default: ","
+    include_header: true         # optional, default: true
+    create_dir: true             # optional — create output directory if missing, default: true
+    anchor_table: transfers      # optional — table written last, for ordering guarantees
+```
+
+### PostgreSQL
+
+```yaml
+writer:
+  kind: postgresql
+  config:
+    host: localhost               # required — PostgreSQL server hostname
+    dbname: postgres              # optional, default: postgres
+    port: 5432                    # optional, default: 5432
+    user: postgres                # optional, default: postgres
+    password: ${PG_PASSWORD}      # optional, default: postgres
+    schema: public                # optional — PostgreSQL schema (namespace), default: public
+    create_tables: true           # optional — auto-create tables on first push, default: true
+    anchor_table: transfers       # optional — table written last, for ordering guarantees
 ```
 
 ---

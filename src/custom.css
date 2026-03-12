@@ -7,7 +7,7 @@
 
 @font-face {
     font-family: 'BinaryWaters';
-    src: url('../fonts/BinaryWaters.ttf') format('truetype');
+    src: url('../resources/BinaryWaters.ttf') format('truetype');
     font-weight: 100 900;
     font-style: normal;
     font-display: swap;

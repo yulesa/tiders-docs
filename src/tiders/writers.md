@@ -11,10 +11,14 @@ Writers define where the processed data is stored after each pipeline batch. Eac
 | `ICEBERG` | Apache Iceberg | Data lake with ACID transactions |
 | `DELTA_LAKE` | Delta Lake | Data lake with versioning |
 | `PYARROW_DATASET` | Parquet files | Simple file-based storage |
+| `POSTGRESQL` | PostgreSQL | Relational storage, existing PostgreSQL instances |
+| `CSV` | CSV files | Simple text export, interoperability |
 
 Each table in the pipeline data is written as a separate table or directory named after its key (e.g. `"transfers"` → `transfers` table or `transfers/` directory).
 
 All writers support automatic table creation. tiders infers the output schema from the Arrow data and creates tables accordingly. No manual schema definition is needed.
+
+A pipeline can write to more than one backend simultaneously by passing a list of writers. All writers receive the same processed data in parallel on each batch.
 
 
 ---
@@ -243,6 +247,118 @@ writer:
     use_threads: true                    # optional, default: true
     create_dir: true                     # optional, default: true
     anchor_table: transfers              # optional — written last after all other tables
+```
+
+---
+
+## CSV
+
+Writes Arrow tables as CSV files using `pyarrow.csv.write_csv`. Each table is written to `<base_dir>/<table_name>.csv`. On successive pushes the file is appended to. All tables except the `anchor_table` are written in parallel.
+
+**Python**
+
+```python
+import tiders as cc
+
+writer = cc.Writer(
+    kind=cc.WriterKind.CSV,
+    config=cc.CsvWriterConfig(
+        base_dir="./data/output",       # required — root directory; each table is written to <base_dir>/<table_name>.csv
+        delimiter=",",                  # optional — field delimiter character, default: ","
+        include_header=True,            # optional — write a header row, default: True
+        create_dir=True,                # optional — create output directory if missing, default: True
+        anchor_table="transfers",       # optional — written last after all other tables
+    ),
+)
+```
+
+**yaml**
+
+```yaml
+writer:
+  kind: csv
+  config:
+    base_dir: data/output        # required
+    delimiter: ","               # optional, default: ","
+    include_header: true         # optional, default: true
+    create_dir: true             # optional, default: true
+    anchor_table: transfers      # optional — written last after all other tables
+```
+
+---
+
+## PostgreSQL
+
+Inserts Arrow tables into PostgreSQL using the COPY protocol via `psycopg` v3. Tables are auto-created on the first push using `CREATE TABLE IF NOT EXISTS` derived from the Arrow schema. All tables except the `anchor_table` are inserted in parallel.
+
+Requires: `pip install "tiders[postgresql]"`
+
+**Unsupported raw blockchain fields**
+
+The PostgreSQL writer does **not** support `List`, `Struct`, or `Map` Arrow columns. Writing raw EVM or SVM data directly will fail unless you use a step to flatten or drop the affected columns first.
+
+EVM fields that require preprocessing:
+
+| Table | Field | Arrow type |
+|---|---|---|
+| `blocks` | `uncles` | `List(Binary)` |
+| `blocks` | `withdrawals` | `List(Struct(index, validator_index, address, amount))` |
+| `transactions` | `access_list` | `List(Struct(address, storage_keys))` |
+| `transactions` | `blob_versioned_hashes` | `List(Binary)` |
+| `traces` | `trace_address` | `List(UInt64)` |
+
+SVM fields that require preprocessing:
+
+| Table | Field | Arrow type |
+|---|---|---|
+| `transactions` | `account_keys` | `List(Binary)` |
+| `transactions` | `signatures` | `List(Binary)` |
+| `transactions` | `loaded_readonly_addresses` | `List(Binary)` |
+| `transactions` | `loaded_writable_addresses` | `List(Binary)` |
+| `transactions` | `address_table_lookups` | `List(Struct(account_key, writable_indexes, readonly_indexes))` |
+| `logs` | `instruction_address` | `List(UInt32)` |
+| `instructions` | `instruction_address` | `List(UInt32)` |
+| `instructions` | `rest_of_accounts` | `List(Binary)` |
+
+**Python**
+
+```python
+import psycopg
+import asyncio
+import tiders as cc
+
+connection = asyncio.get_event_loop().run_until_complete(
+    psycopg.AsyncConnection.connect(
+        "host=localhost port=5432 dbname=mydb user=postgresql password=secret",
+        autocommit=False,
+    )
+)
+
+writer = cc.Writer(
+    kind=cc.WriterKind.POSTGRESQL,
+    config=cc.PostgresqlWriterConfig(
+        connection=connection,         # required — open psycopg.AsyncConnection
+        schema="public",               # optional — PostgreSQL schema (namespace), default: "public"
+        create_tables=True,            # optional — auto-create tables on first push, default: True
+        anchor_table="transfers",      # optional — written last after all other tables, default: None
+    ),
+)
+```
+
+**yaml**
+
+```yaml
+writer:
+  kind: postgresql
+  config:
+    host: localhost               # required
+    dbname: postgres              # optional, default: postgres
+    port: 5432                    # optional, default: 5432
+    user: postgres                # optional, default: postgres
+    password: ${PG_PASSWORD}      # optional, default: postgres
+    schema: public                # optional, default: public
+    create_tables: true           # optional, default: true
+    anchor_table: transfers       # optional — written last after all other tables
 ```
 
 ---

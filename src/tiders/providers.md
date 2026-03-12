@@ -8,7 +8,6 @@ Providers are the data sources that tiders fetches blockchain data from. Each pr
 |---|---|---|---|
 | [HyperSync](https://docs.envio.dev/docs/HyperSync/overview) | Yes | No | High-performance indexed data |
 | [SQD](https://docs.sqd.ai/) | Yes | Yes | Decentralized data network |
-|[Yellowstone gRPC](https://www.helius.dev/docs/grpc)| No | Yes | Helius ultra-low latency streaming |
 | RPC | Yes | No | Any standard EVM JSON-RPC endpoint |
 
 ## Configuration
@@ -25,7 +24,7 @@ These parameters are available for all providers:
 
 | Parameter | Type | Default | Description |
 |---|---|---|---|
-| `kind` | `ProviderKind` | — | Provider backend (`hypersync`, `sqd`, `yellowstone_grpc`, `rpc`) |
+| `kind` | `ProviderKind` | — | Provider backend (`hypersync`, `sqd`, `rpc`) |
 | `url` | `str` | None | Provider endpoint URL. If None, uses the provider's default |
 | `bearer_token` | `str` | None | Authentication token for protected APIs |
 | `stop_on_head` | `bool` | `false` | If true, stop when reaching the chain head; if false, keep polling indefinitely |
