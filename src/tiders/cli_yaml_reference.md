@@ -419,10 +419,10 @@ writer:
   kind: postgresql
   config:
     host: localhost               # required — PostgreSQL server hostname
-    dbname: mydb                  # required — database name
+    dbname: postgres              # optional, default: postgres
     port: 5432                    # optional, default: 5432
-    user: postgresql              # optional, default: postgresql
-    password: ${PG_PASSWORD}      # optional
+    user: postgres                # optional, default: postgres
+    password: ${PG_PASSWORD}      # optional, default: postgres
     schema: public                # optional — PostgreSQL schema (namespace), default: public
     create_tables: true           # optional — auto-create tables on first push, default: true
     anchor_table: transfers       # optional — table written last, for ordering guarantees

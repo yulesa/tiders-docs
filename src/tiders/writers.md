@@ -293,11 +293,11 @@ Inserts Arrow tables into PostgreSQL using the COPY protocol via `psycopg` v3. T
 
 Requires: `pip install "tiders[postgresql]"`
 
-### Unsupported raw blockchain fields
+**Unsupported raw blockchain fields**
 
 The PostgreSQL writer does **not** support `List`, `Struct`, or `Map` Arrow columns. Writing raw EVM or SVM data directly will fail unless you use a step to flatten or drop the affected columns first.
 
-**EVM fields that require preprocessing:**
+EVM fields that require preprocessing:
 
 | Table | Field | Arrow type |
 |---|---|---|
@@ -307,7 +307,7 @@ The PostgreSQL writer does **not** support `List`, `Struct`, or `Map` Arrow colu
 | `transactions` | `blob_versioned_hashes` | `List(Binary)` |
 | `traces` | `trace_address` | `List(UInt64)` |
 
-**SVM fields that require preprocessing:**
+SVM fields that require preprocessing:
 
 | Table | Field | Arrow type |
 |---|---|---|
@@ -352,10 +352,10 @@ writer:
   kind: postgresql
   config:
     host: localhost               # required
-    dbname: mydb                  # required
+    dbname: postgres              # optional, default: postgres
     port: 5432                    # optional, default: 5432
-    user: postgresql              # optional, default: postgresql
-    password: ${PG_PASSWORD}      # optional
+    user: postgres                # optional, default: postgres
+    password: ${PG_PASSWORD}      # optional, default: postgres
     schema: public                # optional, default: public
     create_tables: true           # optional, default: true
     anchor_table: transfers       # optional — written last after all other tables
