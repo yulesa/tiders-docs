@@ -1,4 +1,4 @@
-# Tiders
+![Tiders](resources/tiders_logo2.png)
 
 **Tiders** is an open-source framework for building production-ready blockchain data pipelines.
 
