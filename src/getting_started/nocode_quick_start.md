@@ -84,8 +84,24 @@ The CLI auto-discovers `tiders.yaml` in the current directory. However, you can 
 tiders start path/tiders.yaml
 ```
 
+## 5. Generate a Python script (optional)
+
+Once your YAML pipeline is working, you can generate an equivalent Python script using `tiders codegen`:
+
+```bash
+tiders codegen
+```
+
+This reads the same YAML file and outputs a standalone Python script that constructs and runs the same pipeline using the tiders Python SDK. By default, the output file is named after the project in snake_case (e.g. `erc20_transfers.py`). You can specify a custom output path with `-o`:
+
+```bash
+tiders codegen -o my_pipeline.py
+```
+
+This is useful when you want to move beyond YAML and customize the pipeline logic in Python — for example, adding custom transformation steps, conditional logic, or integrating with other libraries.
+
 ## Next steps
 
-- [CLI Overview](../tiders/cli_overview.md) — CLI flags, env var substitution, config auto-discovery
+- [CLI Overview](../tiders/cli_overview.md) — CLI commands, flags, env var substitution, config auto-discovery
 - [CLI YAML Reference](../tiders/cli_yaml_reference.md) — full reference for all YAML sections
 - [rETH Transfer Example](../tiders/examples/reth_transfer.md) — complete annotated example

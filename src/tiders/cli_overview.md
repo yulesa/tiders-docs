@@ -14,7 +14,11 @@ The CLI maps 1:1 to the Python SDK — it parses the YAML into the same Python o
 2. **Build** — construct `ProviderConfig`, `Query`, `Step`s, and `Writer` from the config sections
 3. **Run** — call `run_pipeline()`, identical to Python-mode execution
 
-## CLI flags
+## Commands
+
+### `tiders start`
+
+Run a pipeline from a YAML config file.
 
 ```
 tiders start [CONFIG_PATH] [OPTIONS]
@@ -29,6 +33,26 @@ Options:
   --help                Show this message and exit
   --version             Show the tiders version and exit
 ```
+
+### `tiders codegen`
+
+Generate a standalone Python script from a YAML config file. The generated script constructs and runs the same pipeline using the tiders Python SDK — useful as a starting point when you need to customize beyond what YAML supports.
+
+```
+tiders codegen [CONFIG_PATH] [OPTIONS]
+
+Arguments:
+  CONFIG_PATH          Path to the YAML config file (optional, same discovery rules as start)
+
+Options:
+  -o, --output PATH    Output file path (defaults to <ProjectName>.py in the current directory)
+  --env-file   PATH    Path to a .env file (overrides default discovery)
+  --help               Show this message and exit
+```
+
+The output filename is derived from the `project.name` field in the YAML, converted to snake_case (e.g. `ERC20 Transfers` becomes `erc20_transfers.py`).
+
+Environment variables referenced in the YAML (e.g. `${PROVIDER_URL}`) are emitted as `os.environ.get("PROVIDER_URL")` calls in the generated script, so secrets stay out of the code.
 
 ## Config auto-discovery
 
