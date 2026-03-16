@@ -54,15 +54,52 @@ The output filename is derived from the `project.name` field in the YAML, conver
 
 Environment variables referenced in the YAML (e.g. `${PROVIDER_URL}`) are emitted as `os.environ.get("PROVIDER_URL")` calls in the generated script, so secrets stay out of the code.
 
-## Config auto-discovery
+### `tiders abi`
 
-If `CONFIG_PATH` is omitted, the CLI searches the current directory in this order:
+Fetch contract ABIs from [Sourcify](https://sourcify.dev/) or [Etherscan](https://etherscan.io/) and save them as JSON files. 
 
-1. `tiders.yaml`
-2. `tiders.yml`
-3. Any `.yaml` / `.yml` file that contains both `provider:` and `query:` keys
+```
+tiders abi [OPTIONS]
 
-An error is raised if zero or multiple candidates are found.
+Options:
+  --address TEXT               Contract address (single-address mode)
+  --chain-id TEXT              Chain ID or name (default: 1). See supported chains below
+  --yaml-path PATH             Path to YAML file with contract declarations
+  -o, --output PATH            Output path. Single-address mode: file path. YAML mode: directory
+  --source [sourcify|etherscan] ABI source to try first (default: sourcify). Falls back to the other
+  --env-file PATH              Path to a .env file (overrides default discovery)
+  --help                       Show this message and exit
+```
+
+#### Usage modes
+
+**1. Single address** — fetch one ABI by contract address:
+
+```bash
+tiders abi --address 0xae78736Cd615f374D3085123A210448E74Fc6393
+tiders abi --address 0xae78736Cd615f374D3085123A210448E74Fc6393 --chain-id base
+```
+
+**2. From YAML file** — fetch ABIs for all contracts declared in the YAML:
+
+```bash
+tiders abi --yaml-path pipeline.yaml #(optional, autodiscobery in current directory)
+```
+
+The `--chain-id` option in CLI or in the YAML config accept either a numeric chain ID or a chain name in some chains:
+
+| Name | Chain ID |
+|------|----------|
+| `ethereum`, `mainnet`, `ethereum-mainnet` | 1 |
+| `bnb` | 56 |
+| `base` | 8453 |
+| `arbitrum` | 42161 |
+| `polygon` | 137 |
+| `scroll` | 534352 |
+| `unichain` | 130 |
+
+Set `ETHERSCAN_API_KEY` in your environment or via .env file. Etherscan is skipped with a warning if not set.
+
 
 ## Environment variables
 
