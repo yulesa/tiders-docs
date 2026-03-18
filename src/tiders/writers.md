@@ -32,13 +32,25 @@ Requires: `pip install "tiders[duckdb]"`
 **Python**
 
 ```python
-import duckdb
 import tiders as cc
+
+# Option 1: plain path
+writer = cc.Writer(
+    kind=cc.WriterKind.DUCKDB,
+    config=cc.DuckdbWriterConfig(
+        path="./data/output.duckdb",   # path to create or connect to a DuckDB database
+    ),
+)
+
+# Option 2: pre-built connection
+import duckdb
+
+duckdb_client=duckdb.connect("./data/output.duckdb")
 
 writer = cc.Writer(
     kind=cc.WriterKind.DUCKDB,
     config=cc.DuckdbWriterConfig(
-        connection=duckdb.connect("./data/output.duckdb"),   # required
+        connection=duckdb_client,   # optional — pre-built DuckDB connection
     ),
 )
 ```
@@ -63,29 +75,39 @@ Requires: `pip install "tiders[clickhouse]"`
 **Python**
 
 ```python
-import clickhouse_connect
 import tiders as cc
 from tiders.config import ClickHouseSkipIndex
 
+# Option 1: plain connection parameters
+writer = cc.Writer(
+    kind=cc.WriterKind.CLICKHOUSE,
+    config=cc.ClickHouseWriterConfig(
+        host="localhost",               # optional, default: "localhost"
+        port=8123,                      # optional, default: 8123
+        username="default",             # optional, default: "default"
+        password="",                    # optional, default: ""
+        database="default",             # optional, default: "default"
+        secure=False,                   # optional, default: False
+        engine="MergeTree()",           # optional, default: "MergeTree()"
+        order_by={"transfers": ["block_number", "log_index"]},   # optional, per-table ordering key columns.
+        codec={"transfers": {"data": "ZSTD(3)"}},   # optional, per-table, per-column compression codecs.
+        skip_index={"transfers": [ClickHouseSkipIndex(name="idx_value", val="value", type_="minmax", granularity=1)]},   # optional, per-table list of data-skipping indexes added after table creation.
+        create_tables=True,             # optional, default: True.
+        anchor_table="transfers",       # optional, default: None.
+    ),
+)
+
+# Option 2: pre-built async client
+import clickhouse_connect
+
 clickhouse_client = await clickhouse_connect.get_async_client(
-    host="localhost",
-    port=8123,
-    username="default",
-    password="",
-    database="default",
-    secure=False,
+    host="localhost", port=8123, username="default", password="", database="default",
 )
 
 writer = cc.Writer(
     kind=cc.WriterKind.CLICKHOUSE,
     config=cc.ClickHouseWriterConfig(
-        client=clickhouse_client,   # required, An async ClickHouse client (``clickhouse_connect``)
-        engine="MergeTree()",       # optional, ClickHouse table engine clause. default: MergeTree()
-        order_by={"transfers": ["block_number", "log_index"]},   # optional, per-table ordering key columns.
-        codec={"transfers": {"data": "ZSTD(3)"}},   # optional, per-table, per-column compression codecs.
-        skip_index={"transfers": [ClickHouseSkipIndex(name="idx_value", val="value", type_="minmax", granularity=1)]},   # optional, per-table list of data-skipping indexes added after table creation.
-        create_tables=True,         # optional, when True, tables are auto-created on the first insert using the Arrow schema, default: True.
-        anchor_table="transfers",   # optional, if set, this table is inserted last to provide ordering guarantees for downstream consumers, default: None.
+        client=clickhouse_client,       # optional — pre-built async ClickHouse client
     ),
 )
 ```
@@ -125,8 +147,22 @@ Requires: `pip install "tiders[iceberg]"`
 **Python**
 
 ```python
-from pyiceberg.catalog import load_catalog
 import tiders as cc
+
+# Option 1: plain catalog parameters
+writer = cc.Writer(
+    kind=cc.WriterKind.ICEBERG,
+    config=cc.IcebergWriterConfig(
+        namespace="my_namespace",                          # required — Iceberg namespace (database) to write tables into
+        catalog_uri="sqlite:///catalog.db",                # required — URI for the Iceberg catalog
+        warehouse="s3://my-bucket/iceberg/",               # required — warehouse root URI for the catalog
+        catalog_type="sql",                                # optional, default: "sql"
+        write_location="s3://my-bucket/iceberg/",          # optional — storage URI for data files, default: warehouse
+    ),
+)
+
+# Option 2: pre-built pyiceberg catalog
+from pyiceberg.catalog import load_catalog
 
 catalog = load_catalog(
     "my_catalog",
@@ -138,9 +174,9 @@ catalog = load_catalog(
 writer = cc.Writer(
     kind=cc.WriterKind.ICEBERG,
     config=cc.IcebergWriterConfig(
-        namespace="my_namespace",           # required — Iceberg namespace (database) to write tables into
-        catalog=catalog,                    # required — a pyiceberg Catalog instance
-        write_location="s3://my-bucket/iceberg/",   # required — storage URI where Iceberg data files are written
+        namespace="my_namespace",                          # required
+        catalog=catalog,                                   # optional — pre-built pyiceberg Catalog instance
+        write_location="s3://my-bucket/iceberg/",          # optional — default: warehouse
     ),
 )
 ```
@@ -323,13 +359,30 @@ SVM fields that require preprocessing:
 **Python**
 
 ```python
+import tiders as cc
+
+# Option 1: plain connection parameters (recommended)
+writer = cc.Writer(
+    kind=cc.WriterKind.POSTGRESQL,
+    config=cc.PostgresqlWriterConfig(
+        host="localhost",              # optional, default: "localhost"
+        port=5432,                     # optional, default: 5432
+        user="postgres",               # optional, default: "postgres"
+        password="secret",             # optional, default: "postgres"
+        dbname="mydb",                 # optional, default: "postgres"
+        schema="public",               # optional — PostgreSQL schema (namespace), default: "public"
+        create_tables=True,            # optional — auto-create tables on first push, default: True
+        anchor_table="transfers",      # optional — written last after all other tables, default: None
+    ),
+)
+
+# Option 2: pre-built async connection
 import psycopg
 import asyncio
-import tiders as cc
 
 connection = asyncio.get_event_loop().run_until_complete(
     psycopg.AsyncConnection.connect(
-        "host=localhost port=5432 dbname=mydb user=postgresql password=secret",
+        "host=localhost port=5432 dbname=mydb user=postgres password=secret",
         autocommit=False,
     )
 )
@@ -337,10 +390,10 @@ connection = asyncio.get_event_loop().run_until_complete(
 writer = cc.Writer(
     kind=cc.WriterKind.POSTGRESQL,
     config=cc.PostgresqlWriterConfig(
-        connection=connection,         # required — open psycopg.AsyncConnection
-        schema="public",               # optional — PostgreSQL schema (namespace), default: "public"
-        create_tables=True,            # optional — auto-create tables on first push, default: True
-        anchor_table="transfers",      # optional — written last after all other tables, default: None
+        connection=connection,         # optional — pre-built psycopg.AsyncConnection
+        schema="public",               # optional, default: "public"
+        create_tables=True,            # optional, default: True
+        anchor_table="transfers",      # optional, default: None
     ),
 )
 ```

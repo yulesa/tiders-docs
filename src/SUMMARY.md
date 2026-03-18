@@ -7,6 +7,7 @@
 - [Installation](./getting_started/installation.md)
 - [No-Code Quick Start](./getting_started/nocode_quick_start.md)
 - [Your First Pipeline](./getting_started/first_pipeline.md)
+- [Choosing a Database](./getting_started/choosing_a_database.md)
 - [Development Setup](./getting_started/development_setup.md)
 
 # Python SDK (tiders)
