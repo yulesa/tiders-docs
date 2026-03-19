@@ -48,6 +48,7 @@ contracts:
   - name: MyToken
     address: "0xabc123..."
     abi: ./MyToken.abi.json
+    chain_id: ethereum # numeric chain ID or a chain name for some chains
 ```
 
 **Reference syntax:**

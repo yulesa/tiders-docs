@@ -16,6 +16,7 @@
 - [CLI (No-Code Mode)](./tiders/cli_overview.md)
   - [CLI YAML Reference](./tiders/cli_yaml_reference.md)
 - [Providers](./tiders/providers.md)
+- [Contracts](./tiders/contracts.md)
 - [Query](./tiders/query.md)
 - [Steps](./tiders/steps.md)
 - [Writers](./tiders/writers.md)

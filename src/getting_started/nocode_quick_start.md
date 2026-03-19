@@ -19,25 +19,29 @@ project:
 
 provider:
   kind: rpc
-  url: ${PROVIDER_URL}
+  url: "https://mainnet.gateway.tenderly.co" # or change to read from the .env file ${PROVIDER_URL}
+
+contracts:
+  - name: erc20
+    address: "0xae78736Cd615f374D3085123A210448E74Fc6393" # rETH contract, we need a erc20 reference to download the ABI.
+    # An abi: ./erc20.abi.json config will be added after using CLI command `tiders abi` in this folder
 
 query:
   kind: evm
   from_block: 18000000
   to_block: 18000100
   logs:
-    - topic0: "Transfer(address,address,uint256)"
-      include_blocks: true
+    - topic0: erc20.Events.Transfer.topic0
   fields:
     log: [address, topic0, topic1, topic2, topic3, data, block_number, transaction_hash, log_index]
-    block: [number, timestamp]
 
 steps:
   - kind: evm_decode_events
     config:
-      event_signature: "Transfer(address indexed from, address indexed to, uint256 amount)"
-      output_table: transfers_raw
+      event_signature: erc20.Events.Transfer.signature
+      output_table: transfers
       allow_decode_fail: true
+      hstack: false
   - kind: hex_encode
 
 writer:
@@ -72,7 +76,15 @@ You can also point to a different `.env` file using the `--env-file` flag:
 tiders start --env-file /path/to/.env tiders.yaml
 ```
 
-## 4. Run
+## 4. Download ABIs
+
+Tiders CLI provides a command to make it easy to download ABIs defined in the YAML file and save them in the folder.
+
+```bash
+tiders abi
+```
+
+## 5. Run
 
 ```bash
 tiders start
