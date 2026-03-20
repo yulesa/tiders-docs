@@ -23,6 +23,7 @@
 - [Examples](./tiders/examples.md)
   - [rETH Transfers (No-Code)](./tiders/examples/reth_transfer.md)
   - [Jupiter Swaps (SVM)](./tiders/examples/jup_swaps.md)
+  - [Uniswap V3 (Factory pattern)](./tiders/examples/uniswap_v3.md)
 
 # Core Libraries (tiders-core)
 
