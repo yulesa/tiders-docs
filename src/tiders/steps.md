@@ -10,7 +10,7 @@ Here's an overview of how transformation steps work:
 
 ## Built-in Steps
 
-| Step | yaml `kind` | Description |
+| Step | yaml | Description |
 |---|---|---|
 | `EVM_DECODE_EVENTS` | `evm_decode_events` | Decode EVM log events using an ABI signature |
 | `SVM_DECODE_INSTRUCTIONS` | `svm_decode_instructions` | Decode Solana program instructions |

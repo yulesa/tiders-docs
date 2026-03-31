@@ -2,6 +2,19 @@
 
 Providers are the data sources that tiders fetches blockchain data from. Each provider connects to a different backend service.
 
+## Choosing a Provider
+
+- **HyperSync** — fast EVM historical data, allow request filtering; requires API key; Paid features
+- **SQD** — fast, supports both EVM and SVM, allow request filtering; decentralized; Paid features
+- **RPC** — works with traditional RPC, don't allow request filtering; useful when other providers don't support your chain
+
+Unlike HyperSync and SQD, the RPC provider does not support server-side filtering of transactions or traces. That's because RPC methods like `eth_getBlockByNumber` and `trace_block` return all data in a block with no filtering options. Setting `TransactionRequest` or `TraceRequest` with filtering fields (e.g. `from_ =0xabc..`, `to=0xabc...`, `status=success`) will produce an error.
+
+Similarly, field selection does not improve performance with the RPC provider — all fields are always fetched from the node and unselected fields are dropped client-side.
+
+Alternatively, you can ingest all data and filter post-indexing in your tiders pipeline or database instead. See the [RPC querying docs](../tiders-rpc-client/querying.md) for details.
+
+
 ## Available Providers
 
 | Provider | EVM (Ethereum) | SVM (Solana) | Description |
@@ -111,9 +124,3 @@ provider:
 ```
 
 The RPC provider uses [tiders-rpc-client](../tiders-rpc-client/overview.md) under the hood, which supports adaptive concurrency, retry logic, and streaming.
-
-## Choosing a Provider
-
-- **HyperSync** — fast EVM historical data, allow request filtering; requires API key
-- **SQD** — fast, supports both EVM and SVM, allow request filtering; decentralized
-- **RPC** — works with traditional RPC, don't allow request filtering; useful when other providers don't support your chain
