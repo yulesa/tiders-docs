@@ -20,10 +20,24 @@ Here's an overview of how transformation steps work:
 | `HEX_ENCODE` | `hex_encode` | Hex-encode all binary columns |
 | `BASE58_ENCODE` | `base58_encode` | Base58-encode all binary columns |
 | `U256_TO_BINARY` | `u256_to_binary` | Convert U256 decimal columns to binary |
+| `SET_CHAIN_ID` | `set_chain_id` | Add a constant `chain_id` column to all tables |
+| `DELETE_TABLES` | `delete_tables` | Remove tables from the current pipeline data |
+| `DELETE_COLUMNS` | `delete_columns` | Drop columns from one or more tables |
+| `RENAME_TABLES` | `rename_tables` | Rename tables in the current pipeline data |
+| `RENAME_COLUMNS` | `rename_columns` | Rename columns in one or more tables |
+| `SELECT_TABLES` | `select_tables` | Keep only selected tables |
+| `SELECT_COLUMNS` | `select_columns` | Keep only selected columns in configured tables |
+| `REORDER_COLUMNS` | `reorder_columns` | Move selected columns to the front of configured tables |
+| `ADD_COLUMNS` | `add_columns` | Add or replace constant-value columns |
+| `COPY_COLUMNS` | `copy_columns` | Copy existing columns to new names |
+| `PREFIX_COLUMNS` | `prefix_columns` | Add a prefix to selected columns |
+| `SUFFIX_COLUMNS` | `suffix_columns` | Add a suffix to selected columns |
+| `PREFIX_TABLES` | `prefix_tables` | Add a prefix to selected table names |
+| `SUFFIX_TABLES` | `suffix_tables` | Add a suffix to selected table names |
+| `DROP_EMPTY_TABLES` | `drop_empty_tables` | Remove empty tables |
 | `JOIN_BLOCK_DATA` | `join_block_data` | Join block fields into other tables |
 | `JOIN_EVM_TRANSACTION_DATA` | `join_evm_transaction_data` | Join EVM transaction fields into other tables |
 | `JOIN_SVM_TRANSACTION_DATA` | `join_svm_transaction_data` | Join SVM transaction fields into other tables |
-| `SET_CHAIN_ID` | `set_chain_id` | Add a constant `chain_id` column to all tables |
 | `POLARS` | — | Custom transformation using Polars DataFrames |
 | `PANDAS` | — | Custom transformation using Pandas DataFrames |
 | `DATAFUSION` | — | Custom transformation using DataFusion |
@@ -478,6 +492,437 @@ cc.Step(
 - kind: set_chain_id
   config:
     chain_id: 1   # required
+```
+
+---
+
+## Delete Tables
+
+Removes whole tables from the current pipeline data before later steps or writers see them.
+
+**Python**
+
+```python
+cc.Step(
+    kind=cc.StepKind.DELETE_TABLES,
+    config=cc.DeleteTablesConfig(
+        tables=["logs", "traces"],   # required
+    ),
+)
+```
+
+**yaml**
+
+```yaml
+- kind: delete_tables
+  config:
+    tables:
+      - logs
+      - traces
+```
+
+---
+
+## Delete Columns
+
+Drops selected columns from one or more tables.
+
+**Python**
+
+```python
+cc.Step(
+    kind=cc.StepKind.DELETE_COLUMNS,
+    config=cc.DeleteColumnsConfig(
+        tables={
+            "transfers": ["raw_data", "topic3"],
+        },   # required
+    ),
+)
+```
+
+**yaml**
+
+```yaml
+- kind: delete_columns
+  config:
+    tables:
+      transfers:
+        - raw_data
+        - topic3
+```
+
+---
+
+## Rename Tables
+
+Renames top-level tables in the current pipeline data.
+
+**Python**
+
+```python
+cc.Step(
+    kind=cc.StepKind.RENAME_TABLES,
+    config=cc.RenameTablesConfig(
+        mappings={
+            "decoded_logs": "transfers",
+        },   # required
+    ),
+)
+```
+
+**yaml**
+
+```yaml
+- kind: rename_tables
+  config:
+    mappings:
+      decoded_logs: transfers   # required
+```
+
+---
+
+## Rename Columns
+
+Renames columns in one or more tables.
+
+**Python**
+
+```python
+cc.Step(
+    kind=cc.StepKind.RENAME_COLUMNS,
+    config=cc.RenameColumnsConfig(
+        tables={
+            "transfers": {
+                "from": "sender",
+                "to": "receiver",
+            },
+        },   # required
+    ),
+)
+```
+
+**yaml**
+
+```yaml
+- kind: rename_columns
+  config:
+    tables:
+      transfers:
+        from: sender
+        to: receiver
+```
+
+---
+
+## Select Tables
+
+Keeps only the listed tables and drops everything else.
+
+**Python**
+
+```python
+cc.Step(
+    kind=cc.StepKind.SELECT_TABLES,
+    config=cc.SelectTablesConfig(
+        tables=["transfers", "blocks"],   # required
+    ),
+)
+```
+
+**yaml**
+
+```yaml
+- kind: select_tables
+  config:
+    tables:
+      - transfers
+      - blocks
+```
+
+---
+
+## Select Columns
+
+Keeps only the listed columns for each configured table.
+
+**Python**
+
+```python
+cc.Step(
+    kind=cc.StepKind.SELECT_COLUMNS,
+    config=cc.SelectColumnsConfig(
+        tables={
+            "transfers": ["block_number", "from", "to", "amount"],
+        },   # required
+    ),
+)
+```
+
+**yaml**
+
+```yaml
+- kind: select_columns
+  config:
+    tables:
+      transfers:
+        - block_number
+        - from
+        - to
+        - amount
+```
+
+---
+
+## Reorder Columns
+
+Moves configured columns to the front of each table. Any remaining columns stay after them in their original order.
+
+**Python**
+
+```python
+cc.Step(
+    kind=cc.StepKind.REORDER_COLUMNS,
+    config=cc.ReorderColumnsConfig(
+        tables={
+            "transfers": ["block_number", "transaction_index", "log_index"],
+        },   # required
+    ),
+)
+```
+
+**yaml**
+
+```yaml
+- kind: reorder_columns
+  config:
+    tables:
+      transfers:
+        - block_number
+        - transaction_index
+        - log_index
+```
+
+---
+
+## Add Columns
+
+Adds constant-value columns to one or more tables. If a target column already exists, it is replaced.
+
+**Python**
+
+```python
+cc.Step(
+    kind=cc.StepKind.ADD_COLUMNS,
+    config=cc.AddColumnsConfig(
+        tables={
+            "transfers": {
+                "protocol": "erc20",
+                "is_transfer": True,
+            },
+        },   # required
+    ),
+)
+```
+
+**yaml**
+
+```yaml
+- kind: add_columns
+  config:
+    tables:
+      transfers:
+        protocol: erc20
+        is_transfer: true
+```
+
+---
+
+## Copy Columns
+
+Copies existing columns to new names in one or more tables.
+
+**Python**
+
+```python
+cc.Step(
+    kind=cc.StepKind.COPY_COLUMNS,
+    config=cc.CopyColumnsConfig(
+        tables={
+            "transfers": {
+                "from": "sender",
+                "to": "receiver",
+            },
+        },   # required
+    ),
+)
+```
+
+**yaml**
+
+```yaml
+- kind: copy_columns
+  config:
+    tables:
+      transfers:
+        from: sender
+        to: receiver
+```
+
+---
+
+## Prefix Columns
+
+Prepends the same prefix to selected columns in each configured table.
+
+**Python**
+
+```python
+cc.Step(
+    kind=cc.StepKind.PREFIX_COLUMNS,
+    config=cc.PrefixColumnsConfig(
+        prefix="tx_",
+        tables={
+            "transfers": ["hash", "from", "to"],
+        },   # required
+    ),
+)
+```
+
+**yaml**
+
+```yaml
+- kind: prefix_columns
+  config:
+    prefix: tx_   # required
+    tables:
+      transfers:
+        - hash
+        - from
+        - to
+```
+
+---
+
+## Suffix Columns
+
+Appends the same suffix to selected columns in each configured table.
+
+**Python**
+
+```python
+cc.Step(
+    kind=cc.StepKind.SUFFIX_COLUMNS,
+    config=cc.SuffixColumnsConfig(
+        suffix="_raw",
+        tables={
+            "transfers": ["data", "topic0"],
+        },   # required
+    ),
+)
+```
+
+**yaml**
+
+```yaml
+- kind: suffix_columns
+  config:
+    suffix: _raw   # required
+    tables:
+      transfers:
+        - data
+        - topic0
+```
+
+---
+
+## Prefix Tables
+
+Prepends the same prefix to selected table names.
+
+**Python**
+
+```python
+cc.Step(
+    kind=cc.StepKind.PREFIX_TABLES,
+    config=cc.PrefixTablesConfig(
+        prefix="raw_",
+        tables=["logs", "transactions"],   # required
+    ),
+)
+```
+
+**yaml**
+
+```yaml
+- kind: prefix_tables
+  config:
+    prefix: raw_   # required
+    tables:
+      - logs
+      - transactions
+```
+
+---
+
+## Suffix Tables
+
+Appends the same suffix to selected table names.
+
+**Python**
+
+```python
+cc.Step(
+    kind=cc.StepKind.SUFFIX_TABLES,
+    config=cc.SuffixTablesConfig(
+        suffix="_decoded",
+        tables=["instructions", "logs"],   # required
+    ),
+)
+```
+
+**yaml**
+
+```yaml
+- kind: suffix_tables
+  config:
+    suffix: _decoded   # required
+    tables:
+      - instructions
+      - logs
+```
+
+---
+
+## Drop Empty Tables
+
+Removes empty tables from the current pipeline data. You can target specific table names or omit `tables` to check every table.
+
+**Python**
+
+```python
+cc.Step(
+    kind=cc.StepKind.DROP_EMPTY_TABLES,
+    config=cc.DropEmptyTablesConfig(
+        tables=["logs", "traces"],   # optional — default: None (check all tables)
+    ),
+)
+```
+
+**yaml**
+
+```yaml
+- kind: drop_empty_tables
+  config:
+    tables:   # optional — default: all tables
+      - logs
+      - traces
+```
+
+You can also check every table by passing an empty config:
+
+```yaml
+- kind: drop_empty_tables
+  config: {}
 ```
 
 ---

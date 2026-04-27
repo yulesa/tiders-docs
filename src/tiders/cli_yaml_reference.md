@@ -282,6 +282,196 @@ Add a chain_id column
     chain_id: 1  # The chain identifier to set (e.g. 1 for Ethereum mainnet).
 ```
 
+### `delete_tables`
+
+Remove whole tables from the current pipeline data.
+
+```yaml
+- kind: delete_tables
+  config:
+    tables:
+      - logs
+      - traces
+```
+
+### `delete_columns`
+
+Drop selected columns from one or more tables.
+
+```yaml
+- kind: delete_columns
+  config:
+    tables:
+      transfers:
+        - raw_data
+        - topic3
+```
+
+### `rename_tables`
+
+Rename top-level tables in the current pipeline data.
+
+```yaml
+- kind: rename_tables
+  config:
+    mappings:
+      decoded_logs: transfers   # required
+```
+
+### `rename_columns`
+
+Rename columns in one or more tables.
+
+```yaml
+- kind: rename_columns
+  config:
+    tables:
+      transfers:
+        from: sender
+        to: receiver
+```
+
+### `select_tables`
+
+Keep only the listed tables and drop the rest.
+
+```yaml
+- kind: select_tables
+  config:
+    tables:
+      - transfers
+      - blocks
+```
+
+### `select_columns`
+
+Keep only the listed columns for each configured table.
+
+```yaml
+- kind: select_columns
+  config:
+    tables:
+      transfers:
+        - block_number
+        - from
+        - to
+        - amount
+```
+
+### `reorder_columns`
+
+Move configured columns to the front of each table. Unlisted columns stay after them in their original order.
+
+```yaml
+- kind: reorder_columns
+  config:
+    tables:
+      transfers:
+        - block_number
+        - transaction_index
+        - log_index
+```
+
+### `add_columns`
+
+Add constant-value columns to one or more tables. Existing columns with the same name are replaced.
+
+```yaml
+- kind: add_columns
+  config:
+    tables:
+      transfers:
+        protocol: erc20
+        is_transfer: true
+```
+
+### `copy_columns`
+
+Copy existing columns to new names.
+
+```yaml
+- kind: copy_columns
+  config:
+    tables:
+      transfers:
+        from: sender
+        to: receiver
+```
+
+### `prefix_columns`
+
+Add the same prefix to selected columns.
+
+```yaml
+- kind: prefix_columns
+  config:
+    prefix: tx_   # required
+    tables:
+      transfers:
+        - hash
+        - from
+        - to
+```
+
+### `suffix_columns`
+
+Add the same suffix to selected columns.
+
+```yaml
+- kind: suffix_columns
+  config:
+    suffix: _raw   # required
+    tables:
+      transfers:
+        - data
+        - topic0
+```
+
+### `prefix_tables`
+
+Add the same prefix to selected table names.
+
+```yaml
+- kind: prefix_tables
+  config:
+    prefix: raw_   # required
+    tables:
+      - logs
+      - transactions
+```
+
+### `suffix_tables`
+
+Add the same suffix to selected table names.
+
+```yaml
+- kind: suffix_tables
+  config:
+    suffix: _decoded   # required
+    tables:
+      - instructions
+      - logs
+```
+
+### `drop_empty_tables`
+
+Remove empty tables from the current pipeline data.
+
+```yaml
+- kind: drop_empty_tables
+  config:
+    tables:   # optional — when omitted, all tables are checked
+      - logs
+      - traces
+```
+
+This step also accepts an empty config to check every table:
+
+```yaml
+- kind: drop_empty_tables
+  config: {}
+```
+
 ### `sql`
 
 Run one or more DataFusion SQL queries. `CREATE TABLE name AS SELECT ...` stores results under `name`; plain `SELECT` stores as `sql_result`.
