@@ -1,14 +1,15 @@
 # CLI YAML Reference
 
-A tiders YAML config has six top-level sections:
+A tiders YAML config has seven top-level sections:
 
 ```yaml
 project:       # pipeline metadata (required)
 provider:      # data source (required)
 contracts:     # ABI + address helpers (optional)
+writer:        # where to write output (required)
+checkpoint:    # resume from last written block (optional)
 query:         # what data to fetch (required)
 steps:         # transformation pipeline (optional)
-writer:        # where to write output (required)
 table_aliases: # rename default table names (optional)
 ```
 
@@ -60,6 +61,142 @@ contracts:
 | `MyToken.Events.Transfer.signature` | Full event signature string |
 | `MyToken.Functions.transfer.selector` | 4-byte function selector |
 | `MyToken.Functions.transfer.signature` | Full function signature string |
+
+---
+
+## `writer`
+
+See [Writers](./writers.md) for full details.
+
+`writer` accepts either a single writer mapping or a list of writer mappings to write to multiple backends in parallel:
+
+```yaml
+writer:
+  - kind: duckdb
+    config:
+      path: data/output.duckdb
+  - kind: csv
+    config:
+      base_dir: data/output
+```
+
+### DuckDB
+
+```yaml
+writer:
+  kind: duckdb
+  config:
+    path: data/output.duckdb   # path to create or connect to a duckdb database
+```
+
+### ClickHouse
+
+```yaml
+writer:
+  kind: clickhouse
+  config:
+    host: localhost            # ClickHouse server hostname
+    port: 8123                 # ClickHouse HTTP port
+    username: default          # ClickHouse username
+    password: ${CH_PASSWORD}   # ClickHouse password
+    database: default          # ClickHouse database name
+    secure: false              # optional — use TLS, default: false
+    codec: LZ4                 # optional — default compression codec for all columns
+    order_by:                  # optional — per-table ORDER BY columns
+      transfers: [block_number, log_index]
+    engine: MergeTree()        # optional — ClickHouse table engine, default: MergeTree()
+    anchor_table: transfers    # optional — table written last, for ordering guarantees
+    create_tables: true        # optional — auto-create tables on first insert, default: true
+```
+
+### Delta Lake
+
+```yaml
+writer:
+  kind: delta_lake
+  config:
+    data_uri: s3://my-bucket/delta/   # base URI where Delta tables are stored
+    partition_by: [block_number]      # optional — columns used for partitioning
+    storage_options:                  # optional — cloud storage credentials/options
+      AWS_REGION: us-east-1
+      AWS_ACCESS_KEY_ID: ${AWS_KEY}
+    anchor_table: transfers           # optional — table written last, for ordering guarantees
+```
+
+### Iceberg
+
+```yaml
+writer:
+  kind: iceberg
+  config:
+    namespace: my_namespace                  # Iceberg namespace (database) to write tables into
+    catalog_uri: sqlite:///catalog.db        # URI for the Iceberg catalog (e.g. sqlite or jdbc)
+    warehouse: s3://my-bucket/iceberg/       # warehouse root URI for the catalog
+    catalog_type: sql                        # catalog type (e.g. sql, rest, hive)
+    write_location: s3://my-bucket/iceberg/  # storage URI where Iceberg data files are written
+```
+
+### PyArrow Dataset (Parquet)
+
+```yaml
+writer:
+  kind: pyarrow_dataset
+  config:
+    base_dir: data/output          # root directory for all output datasets
+    anchor_table: transfers        # optional — table written last, for ordering guarantees
+    partitioning: [block_number]   # optional — columns or Partitioning object per table
+    partitioning_flavor: hive      # optional — partitioning flavor (e.g. hive)
+    max_rows_per_file: 1000000     # optional — max rows per output file, default: 0 (unlimited)
+    create_dir: true               # optional — create output directory if missing, default: true
+```
+
+### CSV
+
+```yaml
+writer:
+  kind: csv
+  config:
+    base_dir: data/output        # required — root directory for all output CSV files
+    delimiter: ","               # optional, default: ","
+    include_header: true         # optional, default: true
+    create_dir: true             # optional — create output directory if missing, default: true
+    anchor_table: transfers      # optional — table written last, for ordering guarantees
+```
+
+### PostgreSQL
+
+```yaml
+writer:
+  kind: postgresql
+  config:
+    host: localhost               # required — PostgreSQL server hostname
+    dbname: postgres              # optional, default: postgres
+    port: 5432                    # optional, default: 5432
+    user: postgres                # optional, default: postgres
+    password: ${PG_PASSWORD}      # optional, default: postgres
+    schema: public                # optional — PostgreSQL schema (namespace), default: public
+    create_tables: true           # optional — auto-create tables on first push, default: true
+    anchor_table: transfers       # optional — table written last, for ordering guarantees
+```
+
+---
+
+## `checkpoint`
+
+The checkpoint tells the pipeline where to resume from after an interruption. At startup, tiders reads `MAX(column)` from `table` using the configured writer and sets `query.from_block` to that value plus one. If the table is empty or does not exist, `from_block` is left unchanged.
+
+```yaml
+checkpoint:
+  table: transfers        # required — table to read the max block from
+  column: block_number    # optional — block-number column, default: "block_number"
+  writer_index: 0         # optional — index into the writers list, default: 0
+```
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `table` | string | — | Name of the destination table to query |
+| `column` | string | `"block_number"` | Column holding the block number |
+| `writer_index` | int | `0` | Index of the writer to read from (for multi-writer pipelines) |
 
 ---
 
@@ -500,123 +637,6 @@ Load a custom step function from an external Python file. Paths are relative to 
     step_type: datafusion        # datafusion (default), polars, or pandas
     context:                     # optional — passed as ctx to the function
       threshold: 100
-```
-
----
-
-## `writer`
-
-See [Writers](./writers.md) for full details.
-
-`writer` accepts either a single writer mapping or a list of writer mappings to write to multiple backends in parallel:
-
-```yaml
-writer:
-  - kind: duckdb
-    config:
-      path: data/output.duckdb
-  - kind: csv
-    config:
-      base_dir: data/output
-```
-
-### DuckDB
-
-```yaml
-writer:
-  kind: duckdb
-  config:
-    path: data/output.duckdb   # path to create or connect to a duckdb database
-```
-
-### ClickHouse
-
-```yaml
-writer:
-  kind: clickhouse
-  config:
-    host: localhost            # ClickHouse server hostname
-    port: 8123                 # ClickHouse HTTP port
-    username: default          # ClickHouse username
-    password: ${CH_PASSWORD}   # ClickHouse password
-    database: default          # ClickHouse database name
-    secure: false              # optional — use TLS, default: false
-    codec: LZ4                 # optional — default compression codec for all columns
-    order_by:                  # optional — per-table ORDER BY columns
-      transfers: [block_number, log_index]
-    engine: MergeTree()        # optional — ClickHouse table engine, default: MergeTree()
-    anchor_table: transfers    # optional — table written last, for ordering guarantees
-    create_tables: true        # optional — auto-create tables on first insert, default: true
-```
-
-### Delta Lake
-
-```yaml
-writer:
-  kind: delta_lake
-  config:
-    data_uri: s3://my-bucket/delta/   # base URI where Delta tables are stored
-    partition_by: [block_number]      # optional — columns used for partitioning
-    storage_options:                  # optional — cloud storage credentials/options
-      AWS_REGION: us-east-1
-      AWS_ACCESS_KEY_ID: ${AWS_KEY}
-    anchor_table: transfers           # optional — table written last, for ordering guarantees
-```
-
-### Iceberg
-
-```yaml
-writer:
-  kind: iceberg
-  config:
-    namespace: my_namespace                  # Iceberg namespace (database) to write tables into
-    catalog_uri: sqlite:///catalog.db        # URI for the Iceberg catalog (e.g. sqlite or jdbc)
-    warehouse: s3://my-bucket/iceberg/       # warehouse root URI for the catalog
-    catalog_type: sql                        # catalog type (e.g. sql, rest, hive)
-    write_location: s3://my-bucket/iceberg/  # storage URI where Iceberg data files are written
-```
-
-### PyArrow Dataset (Parquet)
-
-```yaml
-writer:
-  kind: pyarrow_dataset
-  config:
-    base_dir: data/output          # root directory for all output datasets
-    anchor_table: transfers        # optional — table written last, for ordering guarantees
-    partitioning: [block_number]   # optional — columns or Partitioning object per table
-    partitioning_flavor: hive      # optional — partitioning flavor (e.g. hive)
-    max_rows_per_file: 1000000     # optional — max rows per output file, default: 0 (unlimited)
-    create_dir: true               # optional — create output directory if missing, default: true
-```
-
-### CSV
-
-```yaml
-writer:
-  kind: csv
-  config:
-    base_dir: data/output        # required — root directory for all output CSV files
-    delimiter: ","               # optional, default: ","
-    include_header: true         # optional, default: true
-    create_dir: true             # optional — create output directory if missing, default: true
-    anchor_table: transfers      # optional — table written last, for ordering guarantees
-```
-
-### PostgreSQL
-
-```yaml
-writer:
-  kind: postgresql
-  config:
-    host: localhost               # required — PostgreSQL server hostname
-    dbname: postgres              # optional, default: postgres
-    port: 5432                    # optional, default: 5432
-    user: postgres                # optional, default: postgres
-    password: ${PG_PASSWORD}      # optional, default: postgres
-    schema: public                # optional — PostgreSQL schema (namespace), default: public
-    create_tables: true           # optional — auto-create tables on first push, default: true
-    anchor_table: transfers       # optional — table written last, for ordering guarantees
 ```
 
 ---

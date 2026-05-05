@@ -8,6 +8,19 @@ git clone https://github.com/yulesa/tiders-core.git
 git clone https://github.com/yulesa/tiders-rpc-client.git
 ```
 
+## Installing `tiders` from the local repo
+
+If you want to modify `tiders` and test your changes without publishing to PyPI, install it in editable mode directly from your local clone:
+
+```bash
+cd tiders
+pip install -e ".[all]"
+# If using uv
+uv pip install -e ".[all]"
+```
+
+The `[all]` extra installs every optional dependency (DuckDB, ClickHouse, Delta Lake, etc.). You can also install only the extras you need, e.g. `".[duckdb,cli]"`.
+
 ## Building `tiders-core` and `tiders-rpc-client` from source
 
 If you're modifying `tiders-rpc-client` repo locally, you probably want `tiders-core` to build against your local version.
@@ -35,15 +48,6 @@ maturin develop --uv --config 'patch.crates-io.tiders-rpc-client.path="../../tid
 If you're modifying `tiders-core` repo locally, you probably want `tiders` to use your local `tiders-core` version.
 
 Build `tiders-core` as described above, or just `cargo build` if you haven't modified tiders-rpc-client.
-
-Use local `tiders-core` in your enviroment, overriding the PyPI version:
-
-```bash
-cd tiders
-pip install -e ".[all]"
-# If using uv
-uv pip install -e ".[all]"
-```
 
 
 ## Persistent local development

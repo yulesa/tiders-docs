@@ -60,16 +60,16 @@ provider:
   kind: hypersync
   url: ${PROVIDER_URL}
 
+writer:
+  kind: duckdb
+  config:
+    path: data/output.duckdb
+
 query:
   kind: evm
   from_block: 18000000
 
 steps: [...]
-
-writer:
-  kind: duckdb
-  config:
-    path: data/output.duckdb
 ```
 
 ```bash

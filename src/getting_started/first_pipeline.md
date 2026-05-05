@@ -4,13 +4,14 @@ This tutorial builds a pipeline that fetches ERC-20 transfer events from Ethereu
 
 ## Pipeline Anatomy
 
-Every tiders pipeline has five parts:
+Every tiders pipeline has these parts:
 
 1. **Contracts** — optional, helper for contract information 
 2. **Provider** — where to fetch data from
-3. **Query** — what data to fetch
-4. **Steps** — transformations to apply
-5. **Writer** — where to write the output
+3. **Writer** — where to write the output
+4. **Checkpoint** — optional, resume from the last written block
+5. **Query** — what data to fetch
+6. **Steps** — transformations to apply
 
 ## Step 1: Define the Contracts
 
@@ -61,7 +62,34 @@ provider = ProviderConfig(
 
 Available providers: `HYPERSYNC`, `SQD`, `RPC`.
 
-## Step 3: Define the Query
+## Step 3: Configure the Writer
+
+The writer defines where transformed data is stored. DuckDB creates a local database file. Other options include ClickHouse, Delta Lake, Iceberg, PostgreSQL, PyArrow Dataset (Parquet), and CSV.
+
+```python
+from tiders.config import DuckdbWriterConfig, Writer, WriterKind
+
+writer = Writer(
+    kind=WriterKind.DUCKDB,
+    config=DuckdbWriterConfig(path='data/transfers.duckdb'),
+)
+```
+
+## Step 4: Configure the Checkpoint (optional)
+
+The checkpoint lets the pipeline resume from where it left off after an interruption. At startup, tiders reads `MAX(column)` from the specified table and advances `from_block` to that value plus one. If the table is empty or does not exist, the configured `from_block` is used unchanged.
+
+```python
+from tiders.config import CheckpointConfig
+
+checkpoint = CheckpointConfig(
+    table="transfers",       # table to read the max block from
+    column="block_number",   # default, can be omitted
+    writer_index=0,          # default, can be omitted
+)
+```
+
+## Step 5: Define the Query
 
 The query defines what data to fetch: block range, filters, and fields.
 
@@ -92,7 +120,7 @@ query = Query(
 )
 ```
 
-## Step 4: Add Transformation Steps
+## Step 6: Add Transformation Steps
 
 Steps are transformations applied to the raw data before writing. They run in order, each step's output feeding into the next.
 
@@ -104,55 +132,56 @@ Decodes the raw log data (topic1..3 + data) into named columns using the event s
 
 STEP 2 - HEX_ENCODE: 
 
+Casts all columns matching a source PyArrow type to a target type. Here it downcasts `Decimal256` (the EVM uint256 wire type) to `Decimal128(38,0)` for DuckDB compatibility. With `allow_cast_fail=True`, values that overflow become null instead of raising an error.
+
+STEP 3 - HEX_ENCODE: 
+
 Converts binary columns (addresses, hashes) to hex strings, making them human-readable and compatible with databases like DuckDB.
 
 ```python
-from tiders.config import EvmDecodeEventsConfig, HexEncodeConfig, Step, StepKind
+import pyarrow as pa
+from tiders.config import CastByTypeConfig, EvmDecodeEventsConfig, HexEncodeConfig, Step, StepKind
 
 steps = [
-    # Decode the raw log data into typed columns
-    cc.Step(
-        kind=cc.StepKind.EVM_DECODE_EVENTS,
-        config=cc.EvmDecodeEventsConfig(
+    Step(
+        kind=StepKind.EVM_DECODE_EVENTS,
+        config=EvmDecodeEventsConfig(
             event_signature="Transfer(address indexed from, address indexed to, uint256 amount)",
             output_table="transfers",
             allow_decode_fail=True,
+            hstack=True,
         ),
     ),
-    # Hex-encode binary fields for readable output
-    cc.Step(
-        kind=cc.StepKind.HEX_ENCODE,
-        config=cc.HexEncodeConfig(),
+    # Downcast Decimal256 (EVM uint256) to Decimal128 for DuckDB compatibility
+    Step(
+        kind=StepKind.CAST_BY_TYPE,
+        config=CastByTypeConfig(
+            from_type=pa.decimal256(76, 0),
+            to_type=pa.decimal128(38, 0),
+            allow_cast_fail=True,
+        ),
+    ),
+    Step(
+        kind=StepKind.HEX_ENCODE,
+        config=HexEncodeConfig(),
     ),
 ]
 ```
 
-## Step 5: Configure the Writer
+## Step 7: Run the Pipeline
 
-The writer defines where transformed data is stored. DuckDB creates a local database file. Other options include ClickHouse, Delta Lake, Iceberg, PostgreSQL, PyArrow Dataset (Parquet), and CSV.
-
-```python
-from tiders.config import DuckdbWriterConfig, Writer, WriterKind
-
-writer = Writer(
-    kind=WriterKind.DUCKDB,
-    config=DuckdbWriterConfig(path='data/transfers.duckdb'),
-)
-```
-
-## Step 6: Run the Pipeline
-
-The Pipeline ties all parts together. run_pipeline() executes the full ingestion: fetch -> transform -> write.
+The Pipeline ties all parts together. `run_pipeline()` executes the full ingestion: fetch → transform → write.
 
 ```python
 import asyncio
 from tiders import run_pipeline
 from tiders.config import Pipeline
 
-pipeline = cc.Pipeline(
+pipeline = Pipeline(
     provider=provider,
-    query=query,
     writer=writer,
+    checkpoint=checkpoint,  # optional
+    query=query,
     steps=steps,
 )
 

@@ -26,6 +26,15 @@ contracts:
     address: "0xae78736Cd615f374D3085123A210448E74Fc6393" # rETH contract, we need a erc20 reference to download the ABI.
     # An abi: ./erc20.abi.json config will be added after using CLI command `tiders abi` in this folder
 
+writer:
+  kind: duckdb
+  config:
+    path: data/transfers.duckdb
+
+# Optional: resume from the last written block if the pipeline is interrupted
+# checkpoint:
+#   table: transfers
+
 query:
   kind: evm
   from_block: 18000000
@@ -41,13 +50,13 @@ steps:
       event_signature: erc20.Events.Transfer.signature
       output_table: transfers
       allow_decode_fail: true
-      hstack: false
+      hstack: true
+  - kind: cast_by_type
+    config:
+      from_type: "decimal256(76,0)"
+      to_type: "decimal128(38,0)"
+      allow_cast_fail: true
   - kind: hex_encode
-
-writer:
-  kind: duckdb
-  config:
-    path: data/transfers.duckdb
 ```
 
 ## 3. Environment Variables
