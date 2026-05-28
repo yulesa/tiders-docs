@@ -278,6 +278,7 @@ Decode EVM log events using an ABI signature
     allow_decode_fail: true        # optional — when True rows that fails are nulls values instead of raising an error, default: False
     filter_by_topic0: false        # optional — when True only rows whose ``topic0`` matches the event topic0 are decoded, default: False
     hstack: true                   # optional — when True decoded columns are horizontally stacked with the input columns, default: True
+    large_int_as_binary: false     # optional — when True, int128/uint128/int256/uint256 are emitted as fixed-width big-endian Binary instead of Decimal, default: False
 ```
 
 ### `svm_decode_instructions`
@@ -368,6 +369,19 @@ Base58-encode all binary columns
 - kind: base58_encode
   config:
     tables: [instructions]   # optional — list of table names to process. When ``None``, all tables in the data dictionary are processed, default: None
+```
+
+### `large_int_columns_to_binary`
+
+Convert named scale-0 `Decimal128`/`Decimal256` columns in a single table to fixed-width big-endian binary (16 bytes and 32 bytes respectively). Produces the same byte layout as `evm_decode_events` with `large_int_as_binary: true`.
+
+```yaml
+- kind: large_int_columns_to_binary
+  config:
+    table_name: transfers   # required — table whose columns to convert
+    columns:                # required — list of scale-0 Decimal columns to convert
+      - amount
+      - value
 ```
 
 ### `join_block_data`

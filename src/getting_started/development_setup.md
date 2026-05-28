@@ -14,9 +14,9 @@ If you want to modify `tiders` and test your changes without publishing to PyPI,
 
 ```bash
 cd tiders
-pip install -e ".[all]"
+pip install -e ".[all] ../tiders-core/python"
 # If using uv
-uv pip install -e ".[all]"
+uv pip install -e ".[all] ../tiders-core/python"
 ```
 
 The `[all]` extra installs every optional dependency (DuckDB, ClickHouse, Delta Lake, etc.). You can also install only the extras you need, e.g. `".[duckdb,cli]"`.

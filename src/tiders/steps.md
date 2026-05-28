@@ -20,6 +20,7 @@ Here's an overview of how transformation steps work:
 | `HEX_ENCODE` | `hex_encode` | Hex-encode all binary columns |
 | `BASE58_ENCODE` | `base58_encode` | Base58-encode all binary columns |
 | `U256_TO_BINARY` | `u256_to_binary` | Convert U256 decimal columns to binary |
+| `LARGE_INT_COLUMNS_TO_BINARY` | `large_int_columns_to_binary` | Convert named large-integer columns in one table to fixed-width binary |
 | `SET_CHAIN_ID` | `set_chain_id` | Add a constant `chain_id` column to all tables |
 | `DELETE_TABLES` | `delete_tables` | Remove tables from the current pipeline data |
 | `DELETE_COLUMNS` | `delete_columns` | Drop columns from one or more tables |
@@ -61,7 +62,8 @@ cc.Step(
         input_table="logs",               # optional — name of the input table to decode, default: "logs"
         allow_decode_fail=True,           # optional — when True rows that fails are nulls values instead of raising an error, default: False
         filter_by_topic0=False,           # optional — when True only rows whose ``topic0`` matches the event topic0 are decoded, default: False
-        hstack=True,                      # optional — when True decoded columns are horizontally stacked with the input columns, default: True input columns
+        hstack=True,                      # optional — when True decoded columns are horizontally stacked with the input columns, default: True
+        large_int_as_binary=False,        # optional — when True, int128/uint128/int256/uint256 are emitted as fixed-width big-endian Binary instead of Decimal, default: False
     ),
 )
 ```
@@ -72,11 +74,12 @@ cc.Step(
 - kind: evm_decode_events
   config:
     event_signature: "Transfer(address indexed from, address indexed to, uint256 amount)"
-    output_table: transfers       # optional, default: decoded_logs
-    input_table: logs             # optional, default: logs
-    allow_decode_fail: false      # optional, default: false
-    filter_by_topic0: false       # optional, default: false
-    hstack: true                  # optional, default: true
+    output_table: transfers          # optional, default: decoded_logs
+    input_table: logs                # optional, default: logs
+    allow_decode_fail: false         # optional, default: false
+    filter_by_topic0: false          # optional, default: false
+    hstack: true                     # optional, default: true
+    large_int_as_binary: false       # optional, default: false
 ```
 
 ---
@@ -378,6 +381,35 @@ cc.Step(
 
 ---
 -->
+
+## Large Int Columns to Binary
+
+Converts named scale-0 `Decimal128` or `Decimal256` columns in a single table to fixed-width big-endian two's-complement binary (16 bytes for `Decimal128`, 32 bytes for `Decimal256`). Produces the same byte layout as `evm_decode_events` with `large_int_as_binary=True`, so the two approaches are interchangeable. Use this step when you want to convert specific columns after decoding rather than during it.
+
+**Python**
+
+```python
+cc.Step(
+    kind=cc.StepKind.LARGE_INT_COLUMNS_TO_BINARY,
+    config=cc.LargeIntColumnsToBinaryConfig(
+        table_name="transfers",                  # required — table whose columns to convert
+        columns=["amount", "value"],             # required — list of scale-0 Decimal columns to convert
+    ),
+)
+```
+
+**yaml**
+
+```yaml
+- kind: large_int_columns_to_binary
+  config:
+    table_name: transfers          # required — table whose columns to convert
+    columns:                       # required — list of scale-0 Decimal columns to convert
+      - amount
+      - value
+```
+
+---
 
 ## Join Block Data
 
