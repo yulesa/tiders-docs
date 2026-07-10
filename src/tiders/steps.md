@@ -62,7 +62,7 @@ cc.Step(
         input_table="logs",               # optional — name of the input table to decode, default: "logs"
         allow_decode_fail=True,           # optional — when True rows that fails are nulls values instead of raising an error, default: False
         filter_by_topic0=False,           # optional — when True only rows whose ``topic0`` matches the event topic0 are decoded, default: False
-        hstack=True,                      # optional — when True decoded columns are horizontally stacked with the input columns, default: True
+        original_columns="all",           # optional — how much of the input row to keep alongside the decoded columns, default: "all"
         large_int_as_binary=False,        # optional — when True, int128/uint128/int256/uint256 are emitted as fixed-width big-endian Binary instead of Decimal, default: False
     ),
 )
@@ -78,9 +78,20 @@ cc.Step(
     input_table: logs                # optional, default: logs
     allow_decode_fail: false         # optional, default: false
     filter_by_topic0: false          # optional, default: false
-    hstack: true                     # optional, default: true
+    original_columns: all            # optional, default: all
     large_int_as_binary: false       # optional, default: false
 ```
+
+**`original_columns`** controls how much of the original input row is kept alongside the decoded columns:
+
+| Value | Behavior |
+| --- | --- |
+| `all` | Keep every original column (the default). |
+| `none` | Keep only the decoded columns. |
+| `drop_all_raw` | Keep the original columns except the raw, encoded ones consumed for decoding (`data`, `topic0`–`topic3`). |
+| `drop_except_topic0` | Like `drop_all_raw` but keep `topic0` (the event selector). EVM only. |
+
+> The deprecated boolean `hstack` is still accepted (`true` → `all`, `false` → `none`) but emits a deprecation warning; prefer `original_columns`.
 
 ---
 
@@ -101,7 +112,7 @@ cc.Step(
         input_table="instructions",           # optional — name of the input table to decode, default: "instructions"
         allow_decode_fail=False,              # optional — when True, rows that fails are nulls values instead of raising an error, default: False
         filter_by_discriminator=False,        # optional — when True, only rows whose data starting bytes matches the event topic0 are decoded, default: False
-        hstack=True,                          # optional — when True, decoded columns are horizontally stacked with the input columns, default: True
+        original_columns="all",               # optional — "all" | "none" | "drop_all_raw", default: "all"
     ),
 )
 ```
@@ -116,8 +127,10 @@ cc.Step(
     input_table: instructions                  # optional, default: "instructions"
     allow_decode_fail: false                   # optional, default: false
     filter_by_discriminator: false             # optional, default: false
-    hstack: true                               # optional, default: true
+    original_columns: all                      # optional, default: all
 ```
+
+**`original_columns`** works as described under [EVM Decode Events](steps.md#evm-decode-events): `all` (default), `none`, or `drop_all_raw` (drops the raw columns consumed for decoding: `data`, `a0`–`a9`, `rest_of_accounts`). `drop_except_topic0` is EVM-only and not valid here. The deprecated boolean `hstack` is still accepted (`true` → `all`, `false` → `none`).
 
 ### Instruction Signature
 
@@ -213,7 +226,7 @@ cc.Step(
         output_table="decoded_logs",   # optional — when True rows that fails are nulls values instead of raising an error, default: False
         input_table="logs",            # optional — name of the input table to decode, default: "logs"
         allow_decode_fail=False,       # optional — when True rows that fails are nulls values instead of raising an error, default: False
-        hstack=True,                   # optional — when True decoded columns are horizontally stacked with the input columns, default: True
+        original_columns="all",        # optional — "all" | "none" | "drop_all_raw", default: "all"
     ),
 )
 ```
@@ -227,8 +240,10 @@ cc.Step(
     output_table: decoded_logs         # optional, optional, default: "decoded_logs"
     input_table: logs                  # optional, optional, default: "logs"
     allow_decode_fail: false           # optional, optional, default: false
-    hstack: true                       # optional, optional, default: true
+    original_columns: all              # optional, default: all
 ```
+
+**`original_columns`** works as described under [EVM Decode Events](steps.md#evm-decode-events): `all` (default), `none`, or `drop_all_raw` (drops the raw `message` column consumed for decoding). `drop_except_topic0` is EVM-only and not valid here. The deprecated boolean `hstack` is still accepted (`true` → `all`, `false` → `none`).
 
 ---
 

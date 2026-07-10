@@ -50,7 +50,7 @@ steps:
       event_signature: erc20.Events.Transfer.signature
       output_table: transfers
       allow_decode_fail: true
-      hstack: true
+      original_columns: all
   - kind: cast_by_type
     config:
       from_type: "decimal256(76,0)"

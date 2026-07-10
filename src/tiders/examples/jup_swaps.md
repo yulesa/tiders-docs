@@ -102,7 +102,7 @@ instruction_signature = InstructionSignature(
 
 Steps are executed sequentially. Each step receives the transformed output of the previous one.
 
-1. **`SVM_DECODE_INSTRUCTIONS`** — Decodes raw instruction `data` using the signature above. `hstack=True` appends decoded columns alongside the original fields. `allow_decode_fail=True` keeps rows that fail to decode. The output is written to a new table `jup_swaps_decoded_instructions`.
+1. **`SVM_DECODE_INSTRUCTIONS`** — Decodes raw instruction `data` using the signature above. `original_columns="all"` keeps the decoded columns alongside every original field (use `"none"` for decoded-only, or `"drop_all_raw"` to drop the raw `data`/account columns). `allow_decode_fail=True` keeps rows that fail to decode. The output is written to a new table `jup_swaps_decoded_instructions`.
 2. **`POLARS` (custom step)** — Runs a user-defined function that joins block timestamps and transaction signatures into the decoded instructions table using Polars DataFrames.
 3. **`BASE58_ENCODE`** — Converts all binary columns (public keys, hashes) to base58 strings.
 
@@ -114,7 +114,7 @@ steps = [
         kind=cc.StepKind.SVM_DECODE_INSTRUCTIONS,
         config=cc.SvmDecodeInstructionsConfig(
             instruction_signature=instruction_signature,
-            hstack=True,
+            original_columns="all",
             allow_decode_fail=True,
             output_table="jup_swaps_decoded_instructions",
         ),

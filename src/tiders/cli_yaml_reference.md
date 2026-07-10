@@ -277,7 +277,7 @@ Decode EVM log events using an ABI signature
     input_table: logs              # optional — name of the input table to decode, default: "logs"
     allow_decode_fail: true        # optional — when True rows that fails are nulls values instead of raising an error, default: False
     filter_by_topic0: false        # optional — when True only rows whose ``topic0`` matches the event topic0 are decoded, default: False
-    hstack: true                   # optional — when True decoded columns are horizontally stacked with the input columns, default: True
+    original_columns: all          # optional — how much of the input row to keep: all | none | drop_all_raw | drop_except_topic0, default: all
     large_int_as_binary: false     # optional — when True, int128/uint128/int256/uint256 are emitted as fixed-width big-endian Binary instead of Decimal, default: False
 ```
 
@@ -300,7 +300,7 @@ Decode Solana program instructions
     filter_by_discriminator: false        # optional — when True, only rows whose data starting bytes matches the event topic0 are decoded, default: False
     input_table: instructions             # optional — name of the input table to decode, default: "instructions"
     output_table: decoded_instructions    # optional — name of the input table to decode, default: "decoded_instructions"
-    hstack: true                          # optional — when True, decoded columns are horizontally stacked with the input columns, default: True
+    original_columns: all                 # optional — how much of the input row to keep: all | none | drop_all_raw, default: all
 ```
 
 ### `svm_decode_logs`
@@ -319,7 +319,7 @@ Decode Solana program logs
     allow_decode_fail: false    # optional — when True rows that fails are nulls values instead of raising an error, default: False
     input_table: logs           # optional — name of the input table to decode, default: "logs"
     output_table: decoded_logs  # optional — name of the input table to decode, default: "decoded_logs"
-    hstack: true                # optional — when True decoded columns are horizontally stacked with the input columns, default: True
+    original_columns: all       # optional — how much of the input row to keep: all | none | drop_all_raw, default: all
 ```
 
 ### `cast_by_type`

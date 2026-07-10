@@ -128,7 +128,7 @@ STEP 1 - EVM_DECODE_EVENTS:
 
 Decodes the raw log data (topic1..3 + data) into named columns using the event signature.
   - allow_decode_fail: if True, rows that fail to decode are kept (with nulls)
-  - hstack: if False, outputs only decoded columns; if True, append them to the original raw log columns
+  - original_columns: how much of the original log row to keep alongside the decoded columns — `"all"` (keep everything, the default), `"none"` (decoded only), `"drop_all_raw"` (keep originals minus the raw `data`/`topic0..topic3`), or `"drop_except_topic0"` (like `drop_all_raw` but keep `topic0`)
 
 STEP 2 - HEX_ENCODE: 
 
@@ -149,7 +149,7 @@ steps = [
             event_signature="Transfer(address indexed from, address indexed to, uint256 amount)",
             output_table="transfers",
             allow_decode_fail=True,
-            hstack=True,
+            original_columns="all",
         ),
     ),
     # Downcast Decimal256 (EVM uint256) to Decimal128 for DuckDB compatibility
